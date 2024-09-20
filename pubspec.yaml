@@ -1,0 +1,17 @@
+name: tart_dev
+description: "Tiny Dart."
+version: 0.0.1
+homepage: https://github.com/hatcha6/tart_dev
+
+environment:
+  sdk: ^3.5.1
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
