@@ -10,6 +10,7 @@ class Lexer {
   int line = 1;
 
   static final Map<String, TokenType> keywords = {
+    'function': TokenType.tartFunction,
     'if': TokenType.tartIf,
     'else': TokenType.tartElse,
     'switch': TokenType.tartSwitch,
