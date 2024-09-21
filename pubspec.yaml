@@ -1,7 +1,7 @@
 name: tart_dev
 description: "Tiny Dart."
 version: 0.0.1
-homepage: https://github.com/hatcha6/tart_dev
+homepage: https://github.com/hatcha6/tart
 
 environment:
   sdk: ^3.5.1

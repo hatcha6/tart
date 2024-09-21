@@ -1,39 +1,77 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# 🍋 Tart
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+Tiny Dart, Big Impact! 🚀
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+[![Pub Version](https://img.shields.io/pub/v/tart_dev.svg)](https://pub.dev/packages/tart_dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## 🌟 Features
 
-## Features
+- 🎯 Lightweight Dart parser
+- 🧩 Modular and extensible design
+- 🚦 Comprehensive token handling
+- 🌳 Abstract Syntax Tree (AST) generation
+- 🧪 Thoroughly tested
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+## 🚀 Getting Started
 
-## Getting started
+Add `tart_dev` to your `pubspec.yaml`:
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```yaml
+dependencies:
+    tart_dev: ^0.0.1
 ```
 
-## Additional information
+then run:
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```bash
+dart pub get
+```
+
+
+## 📚 Usage
+
+Here's a quick example of how to use Tart:
+
+```dart
+import 'package:tart_dev/tart.dart';
+void main() {
+    final source = 'var x = 42;';
+    final lexer = Lexer(source);
+    final tokens = lexer.scanTokens();
+    final parser = Parser(tokens);
+    final ast = parser.parse();
+    print('Tokens: $tokens');
+    print('AST: $ast');
+}
+```
+
+
+For more examples, check out the `/example` folder in our GitHub repository.
+
+## 🛠️ API Reference
+
+Tart provides the following main classes:
+
+- `Lexer`:  Tokenizes the input source code
+- `Parser`: Generates an AST from tokens
+- `Token`:  Represents individual lexical units
+- `AST`:    Various AST node classes for different language constructs
+
+For detailed API documentation, visit our [API reference page](https://pub.dev/documentation/tart_dev/latest/).
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for more details.
+
+## 📄 License
+
+Tart is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 💖 Support
+
+If you find Tart helpful, consider giving it a star on GitHub and sharing it with others!
+
+---
+
+Made with 🍋 by the Tart Dev team
