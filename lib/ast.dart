@@ -1,14 +1,22 @@
+library ast;
+
 import 'token.dart';
 
-sealed class AstNode {}
+part 'widget_ast.dart';
 
-class EndOfFile extends AstNode {}
+sealed class AstNode {
+  const AstNode();
+}
+
+class EndOfFile extends AstNode {
+  const EndOfFile();
+}
 
 class VariableDeclaration extends AstNode {
   final Token name;
   final AstNode? initializer;
 
-  VariableDeclaration(this.name, this.initializer);
+  const VariableDeclaration(this.name, this.initializer);
 }
 
 class FunctionDeclaration extends AstNode {
@@ -16,7 +24,7 @@ class FunctionDeclaration extends AstNode {
   final List<Token> parameters;
   final Block body;
 
-  FunctionDeclaration(this.name, this.parameters, this.body);
+  const FunctionDeclaration(this.name, this.parameters, this.body);
 }
 
 class IfStatement extends AstNode {
@@ -24,14 +32,14 @@ class IfStatement extends AstNode {
   final AstNode thenBranch;
   final AstNode? elseBranch;
 
-  IfStatement(this.condition, this.thenBranch, this.elseBranch);
+  const IfStatement(this.condition, this.thenBranch, this.elseBranch);
 }
 
 class WhileStatement extends AstNode {
   final AstNode condition;
   final AstNode body;
 
-  WhileStatement(this.condition, this.body);
+  const WhileStatement(this.condition, this.body);
 }
 
 class ForStatement extends AstNode {
@@ -40,26 +48,27 @@ class ForStatement extends AstNode {
   final AstNode? increment;
   final AstNode body;
 
-  ForStatement(this.initializer, this.condition, this.increment, this.body);
+  const ForStatement(
+      this.initializer, this.condition, this.increment, this.body);
 }
 
 class ReturnStatement extends AstNode {
   final Token keyword;
   final AstNode? value;
 
-  ReturnStatement(this.keyword, this.value);
+  const ReturnStatement(this.keyword, this.value);
 }
 
 class Block extends AstNode {
   final List<AstNode> statements;
 
-  Block(this.statements);
+  const Block(this.statements);
 }
 
 class ExpressionStatement extends AstNode {
   final AstNode expression;
 
-  ExpressionStatement(this.expression);
+  const ExpressionStatement(this.expression);
 }
 
 class Assignment extends AstNode {
@@ -67,7 +76,7 @@ class Assignment extends AstNode {
   final Token operator;
   final AstNode value;
 
-  Assignment(this.name, this.operator, this.value);
+  const Assignment(this.name, this.operator, this.value);
 }
 
 class BinaryExpression extends AstNode {
@@ -75,14 +84,14 @@ class BinaryExpression extends AstNode {
   final Token operator;
   final AstNode right;
 
-  BinaryExpression(this.left, this.operator, this.right);
+  const BinaryExpression(this.left, this.operator, this.right);
 }
 
 class UnaryExpression extends AstNode {
   final Token operator;
   final AstNode right;
 
-  UnaryExpression(this.operator, this.right);
+  const UnaryExpression(this.operator, this.right);
 }
 
 class CallExpression extends AstNode {
@@ -90,17 +99,17 @@ class CallExpression extends AstNode {
   final Token paren;
   final List<AstNode> arguments;
 
-  CallExpression(this.callee, this.paren, this.arguments);
+  const CallExpression(this.callee, this.paren, this.arguments);
 }
 
 class Literal extends AstNode {
   final dynamic value;
 
-  Literal(this.value);
+  const Literal(this.value);
 }
 
 class Variable extends AstNode {
   final Token name;
 
-  Variable(this.name);
+  const Variable(this.name);
 }

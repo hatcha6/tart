@@ -17,7 +17,9 @@ class Parser {
 
   AstNode declaration() {
     try {
-      if (match(
+      if (match([TokenType.flutterWidget])) {
+        return flutterWidgetDeclaration();
+      } else if (match(
           [TokenType.tartVar, TokenType.tartConst, TokenType.tartFinal])) {
         return varDeclaration();
       } else if (match([TokenType.tartFunction])) {
@@ -37,7 +39,58 @@ class Parser {
       }
     } catch (e) {
       synchronize();
-      return EndOfFile();
+      return const EndOfFile();
+    }
+  }
+
+  AstWidget flutterWidgetDeclaration() {
+    Token name =
+        consume(TokenType.identifier, "Expect widget name after 'flutter::'.");
+    consume(TokenType.leftParen, "Expect '(' after widget name.");
+
+    // Parse widget parameters
+    Map<String, AstNode> parameters = {};
+    if (!check(TokenType.rightParen)) {
+      do {
+        Token paramName =
+            consume(TokenType.identifier, "Expect parameter name.");
+        consume(TokenType.colon, "Expect ':' after parameter name.");
+        AstNode paramValue = expression();
+        parameters[paramName.lexeme] = paramValue;
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightParen, "Expect ')' after widget parameters.");
+
+    // Create the appropriate AstWidget subclass based on the widget name
+    switch (name.lexeme) {
+      case 'Text':
+        return Text(name, parameters['text'] as String);
+      case 'Column':
+        return Column(name, parameters['children'] as List<AstWidget>);
+      case 'Row':
+        return Row(name, parameters['children'] as List<AstWidget>);
+      case 'Container':
+        return Container(name, parameters['child'] as AstWidget);
+      case 'Image':
+        return Image(name, parameters['url'] as String);
+      // case 'Padding': // TODO: what about EdgeInets?
+      //   return Padding(name, parameters['padding'] as flt.EdgeInsets,
+      //       parameters['child'] as AstWidget);
+      case 'Center':
+        return Center(name, parameters['child'] as AstWidget);
+      case 'SizedBox':
+        return SizedBox(name,
+            width: parameters['width'] as double?,
+            height: parameters['height'] as double?,
+            child: parameters['child'] as AstWidget?);
+      case 'Expanded':
+        return Expanded(name, parameters['child'] as AstWidget,
+            flex: parameters['flex'] as int? ?? 1);
+      // case 'ElevatedButton': // TODO: how will this work inside real Flutter?
+      //   return ElevatedButton(name, parameters['child'] as AstWidget,
+      //       parameters['onPressed'] as VoidCallback);
+      default:
+        throw error(name, "Unknown Flutter widget: ${name.lexeme}");
     }
   }
 
@@ -155,7 +208,7 @@ class Parser {
       if (operator.type == TokenType.plusPlus ||
           operator.type == TokenType.minusMinus) {
         // For ++ and --, we don't need to parse another expression
-        value = Literal(1);
+        value = const Literal(1);
       } else {
         value = assignment();
       }
@@ -270,7 +323,7 @@ class Parser {
 
   AstNode primary() {
     if (match([TokenType.boolean])) return Literal(previous().literal);
-    if (match([TokenType.tartNull])) return Literal(null);
+    if (match([TokenType.tartNull])) return const Literal(null);
     if (match([TokenType.integer, TokenType.double, TokenType.string])) {
       return Literal(previous().literal);
     }

@@ -39,6 +39,7 @@ class Lexer {
     'true': TokenType.boolean,
     'false': TokenType.boolean,
     'null': TokenType.tartNull,
+    'flutter::': TokenType.flutterWidget,
   };
 
   Lexer(this.source);
@@ -78,7 +79,16 @@ class Lexer {
         addToken(TokenType.semicolon);
         break;
       case ':':
-        addToken(TokenType.colon);
+        if (match(':')) {
+          // Check for 'flutter::' keyword
+          if (source.substring(start, current - 2) == 'flutter') {
+            addToken(TokenType.flutterWidget);
+          } else {
+            addToken(TokenType.colon);
+          }
+        } else {
+          addToken(TokenType.colon);
+        }
         break;
       case ',':
         addToken(TokenType.comma);

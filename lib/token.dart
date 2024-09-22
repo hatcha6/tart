@@ -76,6 +76,7 @@ enum TokenType {
   // Special
   eof,
   unknown,
+  flutterWidget, // Add this new token type
 }
 
 class Token {
@@ -84,8 +85,11 @@ class Token {
   final Object? literal;
   final int line;
 
-  Token(this.type, this.lexeme, this.literal, this.line);
+  const Token(this.type, this.lexeme, this.literal, this.line);
 
   @override
-  String toString() => '$type $lexeme $literal';
+  String toString() {
+    String literalStr = literal != null ? ' ($literal)' : '';
+    return 'Token(type: $type, lexeme: "$lexeme"$literalStr, line: $line)';
+  }
 }

@@ -7,12 +7,12 @@ void main() {
   group('Parser', () {
     test('parses variable declarations', () {
       final tokens = [
-        Token(TokenType.tartVar, 'var', null, 1),
-        Token(TokenType.identifier, 'x', null, 1),
-        Token(TokenType.assign, '=', null, 1),
-        Token(TokenType.integer, '42', 42, 1),
-        Token(TokenType.semicolon, ';', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartVar, 'var', null, 1),
+        const Token(TokenType.identifier, 'x', null, 1),
+        const Token(TokenType.assign, '=', null, 1),
+        const Token(TokenType.integer, '42', 42, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -28,13 +28,13 @@ void main() {
 
     test('parses function declarations', () {
       final tokens = [
-        Token(TokenType.tartFunction, 'function', null, 1),
-        Token(TokenType.identifier, 'foo', null, 1),
-        Token(TokenType.leftParen, '(', null, 1),
-        Token(TokenType.rightParen, ')', null, 1),
-        Token(TokenType.leftBrace, '{', null, 1),
-        Token(TokenType.rightBrace, '}', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartFunction, 'function', null, 1),
+        const Token(TokenType.identifier, 'foo', null, 1),
+        const Token(TokenType.leftParen, '(', null, 1),
+        const Token(TokenType.rightParen, ')', null, 1),
+        const Token(TokenType.leftBrace, '{', null, 1),
+        const Token(TokenType.rightBrace, '}', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -50,13 +50,13 @@ void main() {
 
     test('parses if statements', () {
       final tokens = [
-        Token(TokenType.tartIf, 'if', null, 1),
-        Token(TokenType.leftParen, '(', null, 1),
-        Token(TokenType.boolean, 'true', true, 1),
-        Token(TokenType.rightParen, ')', null, 1),
-        Token(TokenType.leftBrace, '{', null, 1),
-        Token(TokenType.rightBrace, '}', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartIf, 'if', null, 1),
+        const Token(TokenType.leftParen, '(', null, 1),
+        const Token(TokenType.boolean, 'true', true, 1),
+        const Token(TokenType.rightParen, ')', null, 1),
+        const Token(TokenType.leftBrace, '{', null, 1),
+        const Token(TokenType.rightBrace, '}', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -74,13 +74,13 @@ void main() {
 
     test('parses while statements', () {
       final tokens = [
-        Token(TokenType.tartWhile, 'while', null, 1),
-        Token(TokenType.leftParen, '(', null, 1),
-        Token(TokenType.boolean, 'true', true, 1),
-        Token(TokenType.rightParen, ')', null, 1),
-        Token(TokenType.leftBrace, '{', null, 1),
-        Token(TokenType.rightBrace, '}', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartWhile, 'while', null, 1),
+        const Token(TokenType.leftParen, '(', null, 1),
+        const Token(TokenType.boolean, 'true', true, 1),
+        const Token(TokenType.rightParen, ')', null, 1),
+        const Token(TokenType.leftBrace, '{', null, 1),
+        const Token(TokenType.rightBrace, '}', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -97,23 +97,23 @@ void main() {
 
     test('parses for statements', () {
       final tokens = [
-        Token(TokenType.tartFor, 'for', null, 1),
-        Token(TokenType.leftParen, '(', null, 1),
-        Token(TokenType.tartVar, 'var', null, 1),
-        Token(TokenType.identifier, 'i', null, 1),
-        Token(TokenType.assign, '=', null, 1),
-        Token(TokenType.integer, '0', 0, 1),
-        Token(TokenType.semicolon, ';', null, 1),
-        Token(TokenType.identifier, 'i', null, 1),
-        Token(TokenType.less, '<', null, 1),
-        Token(TokenType.integer, '10', 10, 1),
-        Token(TokenType.semicolon, ';', null, 1),
-        Token(TokenType.identifier, 'i', null, 1),
-        Token(TokenType.plusPlus, '++', null, 1),
-        Token(TokenType.rightParen, ')', null, 1),
-        Token(TokenType.leftBrace, '{', null, 1),
-        Token(TokenType.rightBrace, '}', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartFor, 'for', null, 1),
+        const Token(TokenType.leftParen, '(', null, 1),
+        const Token(TokenType.tartVar, 'var', null, 1),
+        const Token(TokenType.identifier, 'i', null, 1),
+        const Token(TokenType.assign, '=', null, 1),
+        const Token(TokenType.integer, '0', 0, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.identifier, 'i', null, 1),
+        const Token(TokenType.less, '<', null, 1),
+        const Token(TokenType.integer, '10', 10, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.identifier, 'i', null, 1),
+        const Token(TokenType.plusPlus, '++', null, 1),
+        const Token(TokenType.rightParen, ')', null, 1),
+        const Token(TokenType.leftBrace, '{', null, 1),
+        const Token(TokenType.rightBrace, '}', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -131,10 +131,10 @@ void main() {
 
     test('parses return statements', () {
       final tokens = [
-        Token(TokenType.tartReturn, 'return', null, 1),
-        Token(TokenType.integer, '42', 42, 1),
-        Token(TokenType.semicolon, ';', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartReturn, 'return', null, 1),
+        const Token(TokenType.integer, '42', 42, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
@@ -149,11 +149,11 @@ void main() {
 
     test('parses expression statements', () {
       final tokens = [
-        Token(TokenType.identifier, 'x', null, 1),
-        Token(TokenType.assign, '=', null, 1),
-        Token(TokenType.integer, '42', 42, 1),
-        Token(TokenType.semicolon, ';', null, 1),
-        Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.identifier, 'x', null, 1),
+        const Token(TokenType.assign, '=', null, 1),
+        const Token(TokenType.integer, '42', 42, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
       ];
       final parser = Parser(tokens);
       final result = parser.parse();
