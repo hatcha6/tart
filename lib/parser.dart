@@ -6,6 +6,7 @@ import 'ast.dart';
 class Parser {
   List<Token> tokens = const [];
   int current = 0;
+  Token? _nextToken;
 
   Parser();
 
@@ -21,25 +22,38 @@ class Parser {
 
   AstNode declaration() {
     try {
-      if (match([TokenType.flutterWidget])) {
-        return flutterWidgetDeclaration();
-      } else if (match(
-          [TokenType.tartVar, TokenType.tartConst, TokenType.tartFinal])) {
-        return varDeclaration();
-      } else if (match([TokenType.tartFunction])) {
-        return functionDeclaration();
-      } else if (match([TokenType.identifier]) && check(TokenType.leftParen)) {
-        return functionDeclaration();
-      } else if (match([TokenType.tartFor])) {
-        return forStatement();
-      } else if (match([TokenType.tartReturn])) {
-        return returnStatement();
-      } else if (match([TokenType.tartIf])) {
-        return ifStatement();
-      } else if (match([TokenType.tartWhile])) {
-        return whileStatement();
-      } else {
-        return statement();
+      switch (peek().type) {
+        case TokenType.flutterWidget:
+          advance();
+          return flutterWidgetDeclaration();
+        case TokenType.tartVar:
+        case TokenType.tartConst:
+        case TokenType.tartFinal:
+          advance();
+          return varDeclaration();
+        case TokenType.tartFunction:
+          advance();
+          return functionDeclaration();
+        case TokenType.identifier:
+          if (peek().type == TokenType.leftParen) {
+            advance();
+            return functionDeclaration();
+          }
+          return statement();
+        case TokenType.tartFor:
+          advance();
+          return forStatement();
+        case TokenType.tartReturn:
+          advance();
+          return returnStatement();
+        case TokenType.tartIf:
+          advance();
+          return ifStatement();
+        case TokenType.tartWhile:
+          advance();
+          return whileStatement();
+        default:
+          return statement();
       }
     } catch (e) {
       synchronize();
@@ -349,11 +363,9 @@ class Parser {
   }
 
   bool match(List<TokenType> types) {
-    for (TokenType type in types) {
-      if (check(type)) {
-        advance();
-        return true;
-      }
+    if (types.contains(peek().type)) {
+      advance();
+      return true;
     }
     return false;
   }
@@ -369,7 +381,10 @@ class Parser {
   }
 
   Token advance() {
-    if (!isAtEnd()) current++;
+    if (!isAtEnd()) {
+      current++;
+      _nextToken = null;
+    }
     return previous();
   }
 
@@ -378,7 +393,8 @@ class Parser {
   }
 
   Token peek() {
-    return tokens[current];
+    _nextToken ??= tokens[current];
+    return _nextToken!;
   }
 
   Token previous() {
