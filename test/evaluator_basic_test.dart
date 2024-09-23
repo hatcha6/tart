@@ -25,10 +25,7 @@ void main() {
       Literal(10),
     );
     evaluator.evaluateNode(varDecl);
-    expect(
-        evaluator.environment
-            .get(const Token(TokenType.identifier, "x", null, 1)),
-        equals(10));
+    expect(evaluator.getVariable('x'), equals(10));
 
     var assignment = const Assignment(
       Token(TokenType.identifier, "x", null, 1),
@@ -36,10 +33,7 @@ void main() {
       Literal(20),
     );
     evaluator.evaluateNode(assignment);
-    expect(
-        evaluator.environment
-            .get(const Token(TokenType.identifier, "x", null, 1)),
-        equals(20));
+    expect(evaluator.getVariable('x'), equals(20));
   });
 
   test('Evaluates binary expressions', () {
@@ -128,10 +122,7 @@ void main() {
     );
 
     evaluator.evaluateNode(whileStmt);
-    expect(
-        evaluator.environment
-            .get(const Token(TokenType.identifier, "x", null, 1)),
-        equals(5));
+    expect(evaluator.getVariable('x'), equals(5));
   });
 
   test('Evaluates function declarations and calls', () {
@@ -161,6 +152,6 @@ void main() {
       [Literal(3), Literal(4)],
     );
 
-    expect(evaluator.evaluateNode(callExpr).value, equals(7));
+    expect(evaluator.evaluateNode(callExpr), equals(7));
   });
 }

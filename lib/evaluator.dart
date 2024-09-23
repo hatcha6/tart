@@ -51,11 +51,11 @@ class Environment {
 }
 
 class Evaluator {
-  final Environment globals = Environment();
-  late Environment environment;
+  final Environment _globals = Environment();
+  late Environment _environment;
 
   Evaluator() {
-    environment = Environment(globals);
+    _environment = Environment(_globals);
     // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
   }
@@ -82,7 +82,7 @@ class Evaluator {
       UnaryExpression() => _evaluateUnaryExpression(node),
       CallExpression() => _evaluateCallExpression(node),
       Literal() => node.value,
-      Variable() => environment.get(node.name),
+      Variable() => _environment.get(node.name),
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
@@ -93,12 +93,12 @@ class Evaluator {
   dynamic _evaluateVariableDeclaration(VariableDeclaration node) {
     dynamic value =
         node.initializer != null ? evaluateNode(node.initializer!) : null;
-    environment.define(node.name.lexeme, value);
+    _environment.define(node.name.lexeme, value);
     return value;
   }
 
   dynamic _evaluateFunctionDeclaration(FunctionDeclaration node) {
-    environment.define(node.name.lexeme, node);
+    _environment.define(node.name.lexeme, node);
     return node;
   }
 
@@ -119,8 +119,8 @@ class Evaluator {
   }
 
   dynamic _evaluateForStatement(ForStatement node) {
-    Environment previousEnv = environment;
-    environment = Environment(environment);
+    Environment previousEnv = _environment;
+    _environment = Environment(_environment);
 
     try {
       if (node.initializer != null) {
@@ -134,25 +134,25 @@ class Evaluator {
         }
       }
     } finally {
-      environment = previousEnv;
+      _environment = previousEnv;
     }
     return null;
   }
 
   dynamic _evaluateReturnStatement(ReturnStatement node) {
     dynamic value = node.value != null ? evaluateNode(node.value!) : null;
-    return _Return(value);
+    return value;
   }
 
   dynamic _evaluateBlock(Block node) {
-    Environment previousEnv = environment;
-    environment = Environment(environment);
+    Environment previousEnv = _environment;
+    _environment = Environment(_environment);
 
     dynamic value;
     for (var statement in node.statements) {
       value = evaluateNode(statement);
     }
-    environment = previousEnv;
+    _environment = previousEnv;
     return value;
   }
 
@@ -206,7 +206,7 @@ class Evaluator {
 
   dynamic _evaluateAssignment(Assignment node) {
     dynamic value = evaluateNode(node.value);
-    environment.assign(node.name, value);
+    _environment.assign(node.name, value);
     return value;
   }
 
@@ -261,15 +261,15 @@ class Evaluator {
 
   dynamic _callFunction(
       FunctionDeclaration declaration, List<dynamic> arguments) {
-    Environment previousEnv = environment;
-    environment = Environment(globals);
+    Environment previousEnv = _environment;
+    _environment = Environment(_globals);
 
     for (int i = 0; i < declaration.parameters.length; i++) {
-      environment.define(declaration.parameters[i].lexeme, arguments[i]);
+      _environment.define(declaration.parameters[i].lexeme, arguments[i]);
     }
 
     final value = evaluateNode(declaration.body);
-    environment = previousEnv;
+    _environment = previousEnv;
     return value;
   }
 
@@ -279,8 +279,8 @@ class Evaluator {
     return true;
   }
 
-  dynamic callFunction(String functionName, List<dynamic> arguments) {
-    var function = environment.getValue(functionName);
+  dynamic callFunction(String functionName, List arguments) {
+    var function = _environment.getValue(functionName);
     if (function is FunctionDeclaration) {
       return _callFunction(function, arguments);
     } else if (function is Function) {
@@ -291,15 +291,19 @@ class Evaluator {
   }
 
   void defineGlobalFunction(String name, Function function) {
-    globals.define(name, function);
+    _globals.define(name, function);
   }
 
   void defineGlobalVariable(String name, dynamic value) {
-    globals.define(name, value);
+    _globals.define(name, value);
   }
 
   dynamic getGlobalVariable(String name) {
-    return globals.getValue(name);
+    return _globals.getValue(name);
+  }
+
+  dynamic getVariable(String name) {
+    return _environment.getValue(name);
   }
 
   flt.EdgeInsets _convertEdgeInsets(EdgeInsets padding) {
@@ -335,9 +339,4 @@ class Evaluator {
       _ => flt.MainAxisAlignment.start,
     };
   }
-}
-
-class _Return {
-  final dynamic value;
-  _Return(this.value);
 }

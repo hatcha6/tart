@@ -33,4 +33,7 @@ class Tart {
       evaluator.defineGlobalFunction(name, value);
 
   dynamic getGlobalVariable(String name) => evaluator.getGlobalVariable(name);
+
+  dynamic callFunction(String functionName, List arguments) =>
+      evaluator.callFunction(functionName, arguments);
 }

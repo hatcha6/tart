@@ -10,7 +10,7 @@ void main() {
 
     // Create a Tart interpreter and evaluate the script
     final interpreter = Tart();
-    final widget = interpreter.run(tartScript).value as Widget;
+    final widget = interpreter.run(tartScript) as Widget;
 
     // Build the widget tree
     await tester.pumpWidget(
