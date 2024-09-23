@@ -1,15 +1,16 @@
-// ignore_for_file: constant_identifier_names
+library tart;
 
 import 'token.dart';
 
 class Lexer {
-  final String source;
+  String source = '';
   final List<Token> tokens = [];
   int start = 0;
   int current = 0;
   int line = 1;
 
   static final Map<String, TokenType> keywords = {
+    'flutter::': TokenType.flutterWidget,
     'function': TokenType.tartFunction,
     'if': TokenType.tartIf,
     'else': TokenType.tartElse,
@@ -39,12 +40,17 @@ class Lexer {
     'true': TokenType.boolean,
     'false': TokenType.boolean,
     'null': TokenType.tartNull,
-    'flutter::': TokenType.flutterWidget,
   };
 
-  Lexer(this.source);
+  Lexer();
 
-  List<Token> scanTokens() {
+  List<Token> scanTokens(String source) {
+    this.source = source;
+    start = 0;
+    current = 0;
+    line = 1;
+    tokens.clear();
+
     while (!isAtEnd()) {
       start = current;
       scanToken();
@@ -81,7 +87,8 @@ class Lexer {
       case ':':
         if (match(':')) {
           // Check for 'flutter::' keyword
-          if (source.substring(start, current - 2) == 'flutter') {
+          if (source.substring(start - 'flutter'.length, current - 2) ==
+              'flutter') {
             addToken(TokenType.flutterWidget);
           } else {
             addToken(TokenType.colon);
@@ -168,6 +175,18 @@ class Lexer {
       case "'":
         string();
         break;
+      case 'f':
+        if (source.length >= current + 8 &&
+            source.substring(current - 1, current + 8) == 'flutter::') {
+          // Consume the rest of 'lutter::'
+          for (int i = 0; i < 8; i++) {
+            advance();
+          }
+          addToken(TokenType.flutterWidget);
+        } else {
+          identifier();
+        }
+        break;
       default:
         if (isDigit(c)) {
           number();
@@ -181,7 +200,7 @@ class Lexer {
   }
 
   void identifier() {
-    while (isAlphaNumeric(peek())) {
+    while (peek() != null && isAlphaNumeric(peek()!)) {
       advance();
     }
 
@@ -196,13 +215,13 @@ class Lexer {
   }
 
   void number() {
-    while (isDigit(peek())) {
+    while (peek() != null && isDigit(peek()!)) {
       advance();
     }
 
-    if (peek() == '.' && isDigit(peekNext())) {
+    if (peek() == '.' && (peekNext() != null && isDigit(peekNext()!))) {
       advance();
-      while (isDigit(peek())) {
+      while (peek() != null && isDigit(peek()!)) {
         advance();
       }
       addToken(
@@ -238,12 +257,12 @@ class Lexer {
     return true;
   }
 
-  String peek() {
-    return isAtEnd() ? '0' : source[current];
+  String? peek() {
+    return isAtEnd() ? null : source[current];
   }
 
-  String peekNext() {
-    return (current + 1 >= source.length) ? '0' : source[current + 1];
+  String? peekNext() {
+    return (current + 1 >= source.length) ? null : source[current + 1];
   }
 
   bool isAlpha(String c) {

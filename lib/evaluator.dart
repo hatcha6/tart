@@ -1,5 +1,8 @@
+library tart;
+
 import 'ast.dart';
 import 'token.dart';
+import 'package:flutter/material.dart' as flt;
 
 class EvaluationError implements Exception {
   final String message;
@@ -26,6 +29,14 @@ class Environment {
     throw EvaluationError("Undefined variable '${name.lexeme}'.");
   }
 
+  dynamic getValue(String name) {
+    if (values.containsKey(name)) {
+      return values[name];
+    }
+    if (enclosing != null) return enclosing!.getValue(name);
+    throw EvaluationError("Undefined variable '$name'.");
+  }
+
   void assign(Token name, dynamic value) {
     if (values.containsKey(name.lexeme)) {
       values[name.lexeme] = value;
@@ -41,12 +52,12 @@ class Environment {
 
 class Evaluator {
   final Environment globals = Environment();
-  Environment environment;
+  late Environment environment;
 
-  Evaluator() : environment = Environment() {
-    // Add any global functions or variables here
+  Evaluator() {
+    environment = Environment(globals);
     // ignore: avoid_print
-    globals.define('print', (dynamic arg) => print(arg));
+    defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
   }
 
   dynamic evaluate(List<AstNode> nodes) {
@@ -74,6 +85,7 @@ class Evaluator {
       Variable() => environment.get(node.name),
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
+      EndOfFile() => null,
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -198,10 +210,53 @@ class Evaluator {
     return value;
   }
 
-  dynamic _evaluateWidget(AstWidget node) {
-    // This method will be implemented to handle Flutter widget creation
-    // For now, we'll return a placeholder
-    return {'type': node.runtimeType.toString(), 'name': node.name.lexeme};
+  flt.Widget _evaluateWidget(AstWidget node) {
+    return switch (node) {
+      Text(text: var text) => flt.Text(text),
+      Column(
+        children: var children,
+        mainAxisAlignment: var mainAxisAlignment,
+        crossAxisAlignment: var crossAxisAlignment
+      ) =>
+        flt.Column(
+          mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
+          crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
+          children: children.map((child) => _evaluateWidget(child)).toList(),
+        ),
+      Row(
+        children: var children,
+        mainAxisAlignment: var mainAxisAlignment,
+        crossAxisAlignment: var crossAxisAlignment
+      ) =>
+        flt.Row(
+          mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
+          crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
+          children: children.map((child) => _evaluateWidget(child)).toList(),
+        ),
+      Container(child: var child) =>
+        flt.Container(child: _evaluateWidget(child)),
+      Image(url: var url) => flt.Image.network(url),
+      Padding(padding: var padding, child: var child) => flt.Padding(
+          padding: _convertEdgeInsets(padding),
+          child: _evaluateWidget(child),
+        ),
+      Center(child: var child) => flt.Center(child: _evaluateWidget(child)),
+      SizedBox(width: var width, height: var height, child: var child) =>
+        flt.SizedBox(
+          width: width,
+          height: height,
+          child: child != null ? _evaluateWidget(child) : null,
+        ),
+      Expanded(child: var child, flex: var flex) => flt.Expanded(
+          flex: flex,
+          child: _evaluateWidget(child),
+        ),
+      ElevatedButton(child: var child, onPressed: var onPressed) =>
+        flt.ElevatedButton(
+          onPressed: () => evaluateNode(onPressed),
+          child: _evaluateWidget(child),
+        ),
+    };
   }
 
   dynamic _callFunction(
@@ -222,6 +277,63 @@ class Evaluator {
     if (value == null) return false;
     if (value is bool) return value;
     return true;
+  }
+
+  dynamic callFunction(String functionName, List<dynamic> arguments) {
+    var function = environment.getValue(functionName);
+    if (function is FunctionDeclaration) {
+      return _callFunction(function, arguments);
+    } else if (function is Function) {
+      return function(arguments);
+    }
+    throw EvaluationError(
+        "Function '$functionName' not found or not callable.");
+  }
+
+  void defineGlobalFunction(String name, Function function) {
+    globals.define(name, function);
+  }
+
+  void defineGlobalVariable(String name, dynamic value) {
+    globals.define(name, value);
+  }
+
+  dynamic getGlobalVariable(String name) {
+    return globals.getValue(name);
+  }
+
+  flt.EdgeInsets _convertEdgeInsets(EdgeInsets padding) {
+    return flt.EdgeInsets.fromLTRB(
+      padding.left,
+      padding.top,
+      padding.right,
+      padding.bottom,
+    );
+  }
+
+  flt.CrossAxisAlignment _convertCrossAxisAlignment(
+      CrossAxisAlignment? crossAxisAlignment) {
+    return switch (crossAxisAlignment) {
+      CrossAxisAlignmentStart() => flt.CrossAxisAlignment.start,
+      CrossAxisAlignmentCenter() => flt.CrossAxisAlignment.center,
+      CrossAxisAlignmentEnd() => flt.CrossAxisAlignment.end,
+      CrossAxisAlignmentStretch() => flt.CrossAxisAlignment.stretch,
+      CrossAxisAlignmentBaseline() => flt.CrossAxisAlignment.baseline,
+      _ => flt.CrossAxisAlignment.start,
+    };
+  }
+
+  flt.MainAxisAlignment _convertMainAxisAlignment(
+      MainAxisAlignment? mainAxisAlignment) {
+    return switch (mainAxisAlignment) {
+      MainAxisAlignmentStart() => flt.MainAxisAlignment.start,
+      MainAxisAlignmentCenter() => flt.MainAxisAlignment.center,
+      MainAxisAlignmentEnd() => flt.MainAxisAlignment.end,
+      MainAxisAlignmentSpaceBetween() => flt.MainAxisAlignment.spaceBetween,
+      MainAxisAlignmentSpaceAround() => flt.MainAxisAlignment.spaceAround,
+      MainAxisAlignmentSpaceEvenly() => flt.MainAxisAlignment.spaceEvenly,
+      _ => flt.MainAxisAlignment.start,
+    };
   }
 }
 

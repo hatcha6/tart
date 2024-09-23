@@ -4,10 +4,10 @@ import 'package:tart_dev/tart.dart';
 void main() {
   void testParse(String source, Function(List<AstNode>) validator) {
     test('Parse: $source', () {
-      final lexer = Lexer(source);
-      final tokens = lexer.scanTokens();
-      final parser = Parser(tokens);
-      final ast = parser.parse();
+      final lexer = Lexer();
+      final tokens = lexer.scanTokens(source);
+      final parser = Parser();
+      final ast = parser.parse(tokens);
       validator(ast);
     });
   }

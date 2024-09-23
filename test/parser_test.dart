@@ -4,6 +4,12 @@ import 'package:tart_dev/token.dart';
 import 'package:tart_dev/ast.dart';
 
 void main() {
+  late Parser parser;
+
+  setUp(() {
+    parser = Parser();
+  });
+
   group('Parser', () {
     test('parses variable declarations', () {
       final tokens = [
@@ -14,8 +20,7 @@ void main() {
         const Token(TokenType.semicolon, ';', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -36,8 +41,7 @@ void main() {
         const Token(TokenType.rightBrace, '}', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -58,8 +62,7 @@ void main() {
         const Token(TokenType.rightBrace, '}', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -82,8 +85,7 @@ void main() {
         const Token(TokenType.rightBrace, '}', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -115,8 +117,7 @@ void main() {
         const Token(TokenType.rightBrace, '}', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -136,8 +137,7 @@ void main() {
         const Token(TokenType.semicolon, ';', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -155,8 +155,7 @@ void main() {
         const Token(TokenType.semicolon, ';', null, 1),
         const Token(TokenType.eof, '', null, 1),
       ];
-      final parser = Parser(tokens);
-      final result = parser.parse();
+      final result = parser.parse(tokens);
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);

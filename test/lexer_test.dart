@@ -4,10 +4,15 @@ import 'package:tart_dev/lexer.dart';
 import 'package:tart_dev/token.dart';
 
 void main() {
+  late Lexer lexer;
+
+  setUp(() {
+    lexer = Lexer();
+  });
+
   group('Lexer', () {
     test('scans single-character tokens', () {
-      final lexer = Lexer('(){},;');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('(){},;');
       expect(tokens.map((t) => t.type), [
         TokenType.leftParen,
         TokenType.rightParen,
@@ -20,8 +25,7 @@ void main() {
     });
 
     test('scans operators', () {
-      final lexer = Lexer('+ - * / = == != < <= > >=');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('+ - * / = == != < <= > >=');
       expect(tokens.map((t) => t.type), [
         TokenType.plus,
         TokenType.minus,
@@ -39,8 +43,7 @@ void main() {
     });
 
     test('scans keywords', () {
-      final lexer = Lexer('if else var true false null');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('if else var true false null');
       expect(tokens.map((t) => t.type), [
         TokenType.tartIf,
         TokenType.tartElse,
@@ -53,8 +56,7 @@ void main() {
     });
 
     test('scans identifiers', () {
-      final lexer = Lexer('foo bar baz');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('foo bar baz');
       expect(tokens.map((t) => t.type), [
         TokenType.identifier,
         TokenType.identifier,
@@ -65,8 +67,7 @@ void main() {
     });
 
     test('scans numbers', () {
-      final lexer = Lexer('123 45.67');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('123 45.67');
       expect(tokens.map((t) => t.type), [
         TokenType.integer,
         TokenType.double,
@@ -76,8 +77,7 @@ void main() {
     });
 
     test('scans strings', () {
-      final lexer = Lexer('"Hello, world!" \'Single quoted\'');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('"Hello, world!" \'Single quoted\'');
       expect(tokens.map((t) => t.type), [
         TokenType.string,
         TokenType.string,
@@ -88,9 +88,8 @@ void main() {
     });
 
     test('handles comments', () {
-      final lexer = Lexer(
+      final tokens = lexer.scanTokens(
           '// This is a comment\n/* This is a\nmulti-line comment */\ncode');
-      final tokens = lexer.scanTokens();
       expect(tokens.map((t) => t.type), [
         TokenType.identifier,
         TokenType.eof,
@@ -99,8 +98,7 @@ void main() {
     });
 
     test('tracks line numbers', () {
-      final lexer = Lexer('line1\nline2\nline3');
-      final tokens = lexer.scanTokens();
+      final tokens = lexer.scanTokens('line1\nline2\nline3');
       expect(tokens.map((t) => t.line), [1, 2, 3, 3]);
     });
   });

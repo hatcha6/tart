@@ -1,13 +1,17 @@
+library tart;
+
 import 'token.dart';
 import 'ast.dart';
 
 class Parser {
-  final List<Token> tokens;
+  List<Token> tokens = const [];
   int current = 0;
 
-  Parser(this.tokens);
+  Parser();
 
-  List<AstNode> parse() {
+  List<AstNode> parse(List<Token> tokens) {
+    this.tokens = tokens;
+    current = 0;
     List<AstNode> statements = [];
     while (!isAtEnd()) {
       statements.add(declaration());
@@ -64,7 +68,7 @@ class Parser {
     // Create the appropriate AstWidget subclass based on the widget name
     switch (name.lexeme) {
       case 'Text':
-        return Text(name, parameters['text'] as String);
+        return Text(name, (parameters['text'] as Literal).value as String);
       case 'Column':
         return Column(name, parameters['children'] as List<AstWidget>);
       case 'Row':
@@ -73,9 +77,9 @@ class Parser {
         return Container(name, parameters['child'] as AstWidget);
       case 'Image':
         return Image(name, parameters['url'] as String);
-      // case 'Padding': // TODO: what about EdgeInets?
-      //   return Padding(name, parameters['padding'] as flt.EdgeInsets,
-      //       parameters['child'] as AstWidget);
+      case 'Padding':
+        return Padding(name, parameters['padding'] as EdgeInsets,
+            parameters['child'] as AstWidget);
       case 'Center':
         return Center(name, parameters['child'] as AstWidget);
       case 'SizedBox':
@@ -86,9 +90,9 @@ class Parser {
       case 'Expanded':
         return Expanded(name, parameters['child'] as AstWidget,
             flex: parameters['flex'] as int? ?? 1);
-      // case 'ElevatedButton': // TODO: how will this work inside real Flutter?
-      //   return ElevatedButton(name, parameters['child'] as AstWidget,
-      //       parameters['onPressed'] as VoidCallback);
+      case 'ElevatedButton':
+        return ElevatedButton(name, parameters['child'] as AstWidget,
+            parameters['onPressed'] as FunctionDeclaration);
       default:
         throw error(name, "Unknown Flutter widget: ${name.lexeme}");
     }
@@ -330,6 +334,9 @@ class Parser {
     if (match([TokenType.assign])) {
       return Assignment(previous(), peek(), expression());
     }
+    if (match([TokenType.flutterWidget])) {
+      return flutterWidgetDeclaration();
+    }
     if (match([TokenType.identifier])) return Variable(previous());
     if (match([TokenType.leftParen])) {
       AstNode expr = expression();
@@ -337,10 +344,8 @@ class Parser {
       return expr;
     }
 
-    // Add this line for debugging
-    print("Unexpected token: ${peek().type} - ${peek().lexeme}");
-
-    throw error(peek(), "Expect expression.");
+    throw error(peek(),
+        "Expected expression, but found ${peek().type} (${peek().lexeme})");
   }
 
   bool match(List<TokenType> types) {

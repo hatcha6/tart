@@ -1,3 +1,5 @@
+library tart;
+
 enum TokenType {
   tartFunction,
   tartIf,
