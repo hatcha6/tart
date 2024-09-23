@@ -212,11 +212,11 @@ class Evaluator {
 
   flt.Widget _evaluateWidget(AstWidget node) {
     return switch (node) {
-      Text(text: var text) => flt.Text(text),
+      Text(text: final text) => flt.Text(text),
       Column(
-        children: var children,
-        mainAxisAlignment: var mainAxisAlignment,
-        crossAxisAlignment: var crossAxisAlignment
+        children: final children,
+        mainAxisAlignment: final mainAxisAlignment,
+        crossAxisAlignment: final crossAxisAlignment
       ) =>
         flt.Column(
           mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
@@ -224,34 +224,34 @@ class Evaluator {
           children: children.map((child) => _evaluateWidget(child)).toList(),
         ),
       Row(
-        children: var children,
-        mainAxisAlignment: var mainAxisAlignment,
-        crossAxisAlignment: var crossAxisAlignment
+        children: final children,
+        mainAxisAlignment: final mainAxisAlignment,
+        crossAxisAlignment: final crossAxisAlignment
       ) =>
         flt.Row(
           mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
           crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
           children: children.map((child) => _evaluateWidget(child)).toList(),
         ),
-      Container(child: var child) =>
+      Container(child: final child) =>
         flt.Container(child: _evaluateWidget(child)),
-      Image(url: var url) => flt.Image.network(url),
-      Padding(padding: var padding, child: var child) => flt.Padding(
+      Image(url: final url) => flt.Image.network(url),
+      Padding(padding: final padding, child: final child) => flt.Padding(
           padding: _convertEdgeInsets(padding),
           child: _evaluateWidget(child),
         ),
-      Center(child: var child) => flt.Center(child: _evaluateWidget(child)),
-      SizedBox(width: var width, height: var height, child: var child) =>
+      Center(child: final child) => flt.Center(child: _evaluateWidget(child)),
+      SizedBox(width: final width, height: final height, child: final child) =>
         flt.SizedBox(
           width: width,
           height: height,
           child: child != null ? _evaluateWidget(child) : null,
         ),
-      Expanded(child: var child, flex: var flex) => flt.Expanded(
+      Expanded(child: final child, flex: final flex) => flt.Expanded(
           flex: flex,
           child: _evaluateWidget(child),
         ),
-      ElevatedButton(child: var child, onPressed: var onPressed) =>
+      ElevatedButton(child: final child, onPressed: final onPressed) =>
         flt.ElevatedButton(
           onPressed: () => evaluateNode(onPressed),
           child: _evaluateWidget(child),
@@ -280,7 +280,7 @@ class Evaluator {
   }
 
   dynamic callFunction(String functionName, List arguments) {
-    var function = _environment.getValue(functionName);
+    final function = _environment.getValue(functionName);
     if (function is FunctionDeclaration) {
       return _callFunction(function, arguments);
     } else if (function is Function) {

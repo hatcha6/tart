@@ -1,6 +1,7 @@
 # 🍋 Tart
 
 Tiny Dart, Big Impact! 🚀
+**Note:** Tart is currently in the early stages of development and is not yet ready for production use.
 
 [![Pub Version](https://img.shields.io/pub/v/tart_dev.svg)](https://pub.dev/packages/tart_dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
