@@ -60,6 +60,21 @@ Tart provides the following main classes:
 
 For detailed API documentation, visit our [API reference page](https://pub.dev/documentation/tart_dev/latest/).
 
+## Why Tart?
+
+Tart offers several advantages for Flutter development:
+
+- **Flutter-focused**: Optimized specifically for Flutter applications
+- **Familiar syntax**: Nearly identical to Dart, minimizing learning curve
+- **Performance**: Designed for efficiency in Flutter-specific use cases
+- **Developer experience**: Intuitive API and enhanced tooling support
+- **Faster development**: Enables quicker iterations on dynamic code
+- **Improved debugging**: Detailed, Flutter-specific error messages
+- **Smaller footprint**: Minimal impact on overall app size
+- **Focused feature set**: Polished core functionalities for common Flutter scenarios
+
+Tart provides a specialized, Flutter-centric solution for dynamic code execution, offering improved performance and an enhanced developer experience.
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for more details.

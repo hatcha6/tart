@@ -222,8 +222,8 @@ class Lexer {
       while (peek() != null && isDigit(peek()!)) {
         advance();
       }
-      addToken(TokenType.double,
-          double.parse(source.substring(start, current)));
+      addToken(
+          TokenType.double, double.parse(source.substring(start, current)));
     } else {
       addToken(TokenType.integer, int.parse(source.substring(start, current)));
     }
@@ -290,8 +290,10 @@ class Lexer {
     tokens.add(_getCachedToken(type, text, literal, line));
   }
 
-  Token _getCachedToken(TokenType type, String lexeme, Object? literal, int line) {
+  Token _getCachedToken(
+      TokenType type, String lexeme, Object? literal, int line) {
     String key = '$type:$lexeme:$literal:$line';
-    return _tokenCache.putIfAbsent(key, () => Token(type, lexeme, literal, line));
+    return _tokenCache.putIfAbsent(
+        key, () => Token(type, lexeme, literal, line));
   }
 }
