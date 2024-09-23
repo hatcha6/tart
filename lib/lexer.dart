@@ -1,5 +1,6 @@
 library tart;
 
+import 'dart:collection';
 import 'token.dart';
 
 class Lexer {
@@ -8,6 +9,7 @@ class Lexer {
   int start = 0;
   int current = 0;
   int line = 1;
+  final StringBuffer _lexemeBuffer = StringBuffer();
 
   static final Map<String, TokenType> keywords = {
     'flutter::': TokenType.flutterWidget,
@@ -42,6 +44,8 @@ class Lexer {
     'null': TokenType.tartNull,
   };
 
+  static final Map<String, Token> _tokenCache = HashMap();
+
   Lexer();
 
   List<Token> scanTokens(String source) {
@@ -56,7 +60,7 @@ class Lexer {
       scanToken();
     }
 
-    tokens.add(Token(TokenType.eof, "", null, line));
+    tokens.add(_getCachedToken(TokenType.eof, "", null, line));
     return tokens;
   }
 
@@ -86,7 +90,6 @@ class Lexer {
         break;
       case ':':
         if (match(':')) {
-          // Check for 'flutter::' keyword
           if (source.substring(start - 'flutter'.length, current - 2) ==
               'flutter') {
             addToken(TokenType.flutterWidget);
@@ -122,19 +125,17 @@ class Lexer {
         break;
       case '/':
         if (match('/')) {
-          // Single-line comment
           while (peek() != '\n' && !isAtEnd()) {
             advance();
           }
         } else if (match('*')) {
-          // Multi-line comment
           while (!isAtEnd() && !(peek() == '*' && peekNext() == '/')) {
             if (peek() == '\n') line++;
             advance();
           }
           if (!isAtEnd()) {
-            advance(); // consume *
-            advance(); // consume /
+            advance();
+            advance();
           }
         } else {
           addToken(match('=') ? TokenType.divideAssign : TokenType.divide);
@@ -170,15 +171,12 @@ class Lexer {
         line++;
         break;
       case '"':
-        string();
-        break;
       case "'":
-        string();
+        string(c);
         break;
       case 'f':
         if (source.length >= current + 8 &&
             source.substring(current - 1, current + 8) == 'flutter::') {
-          // Consume the rest of 'lutter::'
           for (int i = 0; i < 8; i++) {
             advance();
           }
@@ -224,30 +222,28 @@ class Lexer {
       while (peek() != null && isDigit(peek()!)) {
         advance();
       }
-      addToken(
-          TokenType.double, double.parse(source.substring(start, current)));
+      addToken(TokenType.double,
+          double.parse(source.substring(start, current)));
     } else {
       addToken(TokenType.integer, int.parse(source.substring(start, current)));
     }
   }
 
-  void string() {
-    String quote = source[start];
+  void string(String quote) {
+    _lexemeBuffer.clear();
     while (peek() != quote && !isAtEnd()) {
       if (peek() == '\n') line++;
-      advance();
+      _lexemeBuffer.write(advance());
     }
 
     if (isAtEnd()) {
-      // Unterminated string
       addToken(TokenType.unknown);
       return;
     }
 
     advance(); // The closing quote
 
-    String value = source.substring(start + 1, current - 1);
-    addToken(TokenType.string, value);
+    addToken(TokenType.string, _lexemeBuffer.toString());
   }
 
   bool match(String expected) {
@@ -266,11 +262,10 @@ class Lexer {
   }
 
   bool isAlpha(String c) {
-    return (c.codeUnitAt(0) >= 'a'.codeUnitAt(0) &&
-            c.codeUnitAt(0) <= 'z'.codeUnitAt(0)) ||
-        (c.codeUnitAt(0) >= 'A'.codeUnitAt(0) &&
-            c.codeUnitAt(0) <= 'Z'.codeUnitAt(0)) ||
-        c == '_';
+    int code = c.codeUnitAt(0);
+    return (code >= 97 && code <= 122) || // a-z
+        (code >= 65 && code <= 90) || // A-Z
+        code == 95; // _
   }
 
   bool isAlphaNumeric(String c) {
@@ -278,8 +273,8 @@ class Lexer {
   }
 
   bool isDigit(String c) {
-    return c.codeUnitAt(0) >= '0'.codeUnitAt(0) &&
-        c.codeUnitAt(0) <= '9'.codeUnitAt(0);
+    int code = c.codeUnitAt(0);
+    return code >= 48 && code <= 57;
   }
 
   bool isAtEnd() {
@@ -287,12 +282,16 @@ class Lexer {
   }
 
   String advance() {
-    if (isAtEnd()) return '0';
     return source[current++];
   }
 
   void addToken(TokenType type, [Object? literal]) {
     String text = source.substring(start, current);
-    tokens.add(Token(type, text, literal, line));
+    tokens.add(_getCachedToken(type, text, literal, line));
+  }
+
+  Token _getCachedToken(TokenType type, String lexeme, Object? literal, int line) {
+    String key = '$type:$lexeme:$literal:$line';
+    return _tokenCache.putIfAbsent(key, () => Token(type, lexeme, literal, line));
   }
 }
