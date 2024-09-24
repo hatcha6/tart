@@ -154,4 +154,71 @@ void main() {
 
     expect(evaluator.evaluateNode(callExpr), equals(7));
   });
+
+  test('Evaluates member access', () {
+    evaluator.defineGlobalVariable('obj', {'property': 42});
+    var expr = MemberAccess(
+      const Variable(Token(TokenType.identifier, 'obj', null, 1)),
+      const Token(TokenType.identifier, 'property', null, 1),
+    );
+    expect(evaluator.evaluateNode(expr), equals(42));
+  });
+
+  test('Evaluates index access', () {
+    evaluator.defineGlobalVariable('arr', [1, 2, 3]);
+    var expr = IndexAccess(
+      const Variable(Token(TokenType.identifier, 'arr', null, 1)),
+      const Literal(1),
+    );
+    expect(evaluator.evaluateNode(expr), equals(2));
+  });
+
+  test('Evaluates list literal', () {
+    var expr =
+        ListLiteral([const Literal(1), const Literal(2), const Literal(3)]);
+    expect(evaluator.evaluateNode(expr), equals([1, 2, 3]));
+  });
+
+  test('Evaluates length access', () {
+    evaluator.defineGlobalVariable('list', [1, 2, 3, 4]);
+    var expr = LengthAccess(
+      const Variable(Token(TokenType.identifier, 'list', null, 1)),
+    );
+    expect(evaluator.evaluateNode(expr), equals(4));
+
+    evaluator.defineGlobalVariable('str', 'hello');
+    expr = LengthAccess(
+      const Variable(Token(TokenType.identifier, 'str', null, 1)),
+    );
+    expect(evaluator.evaluateNode(expr), equals(5));
+
+    evaluator.defineGlobalVariable('map', {'a': 1, 'b': 2});
+    expr = LengthAccess(
+      const Variable(Token(TokenType.identifier, 'map', null, 1)),
+    );
+    expect(evaluator.evaluateNode(expr), equals(2));
+  });
+
+  test('Throws error for invalid length access', () {
+    evaluator.defineGlobalVariable('num', 42);
+    var expr = LengthAccess(
+      const Variable(Token(TokenType.identifier, 'num', null, 1)),
+    );
+    expect(() => evaluator.evaluateNode(expr), throwsA(isA<EvaluationError>()));
+  });
+
+  test('Throws error for invalid index access', () {
+    evaluator.defineGlobalVariable('arr', [1, 2, 3]);
+    var expr = IndexAccess(
+      const Variable(Token(TokenType.identifier, 'arr', null, 1)),
+      const Literal(5),
+    );
+    expect(() => evaluator.evaluateNode(expr), throwsA(isA<EvaluationError>()));
+
+    expr = IndexAccess(
+      const Variable(Token(TokenType.identifier, 'arr', null, 1)),
+      const Literal('invalid'),
+    );
+    expect(() => evaluator.evaluateNode(expr), throwsA(isA<EvaluationError>()));
+  });
 }

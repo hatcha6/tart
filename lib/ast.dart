@@ -139,3 +139,54 @@ class AnonymousFunction extends FunctionDeclaration {
     return '$randomString$_counter';
   }
 }
+
+class MemberAccess extends AstNode {
+  final AstNode object;
+  final Token name;
+
+  MemberAccess(this.object, this.name);
+}
+
+class IndexAccess extends AstNode {
+  final AstNode object;
+  final AstNode index;
+
+  IndexAccess(this.object, this.index);
+}
+
+class ListLiteral extends AstNode {
+  final List<AstNode> elements;
+
+  ListLiteral(this.elements);
+}
+
+class LengthAccess extends AstNode {
+  final AstNode object;
+
+  LengthAccess(this.object);
+}
+
+class MapLiteral extends AstNode {
+  final List<MapEntry> entries;
+
+  MapLiteral(this.entries);
+}
+
+class MapEntry extends AstNode {
+  final AstNode key;
+  final AstNode value;
+
+  MapEntry(this.key, this.value);
+}
+
+class SetLiteral extends AstNode {
+  final List<AstNode> elements;
+
+  SetLiteral(this.elements);
+}
+
+class BreakStatement extends AstNode {
+  final Token keyword;
+
+  const BreakStatement(this.keyword);
+}

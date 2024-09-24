@@ -14,6 +14,7 @@ class Lexer {
 
   static final Map<String, TokenType> keywords = {
     'flutter::': TokenType.flutterWidget,
+    'f:': TokenType.flutterWidget, // Add the new shorthand
     'function': TokenType.tartFunction,
     'if': TokenType.tartIf,
     'else': TokenType.tartElse,
@@ -246,11 +247,11 @@ class Lexer {
         string(c);
         break;
       case 'f':
-        if (source.length >= current + 8 &&
+        if (match(':')) {
+          addToken(TokenType.flutterWidget);
+        } else if (source.length >= current + 8 &&
             source.substring(current - 1, current + 8) == 'flutter::') {
-          for (int i = 0; i < 8; i++) {
-            advance();
-          }
+          advance(8);
           addToken(TokenType.flutterWidget);
         } else {
           identifier();
@@ -352,8 +353,10 @@ class Lexer {
     return current >= source.length;
   }
 
-  String advance() {
-    return source[current++];
+  String advance([int count = 1]) {
+    String result = source[current];
+    current += count;
+    return result;
   }
 
   void addToken(TokenType type, [Object? literal]) {

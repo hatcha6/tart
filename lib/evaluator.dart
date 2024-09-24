@@ -50,6 +50,8 @@ class Environment {
   }
 }
 
+class BreakException implements Exception {}
+
 class Evaluator {
   final Environment _globals = Environment();
   late Environment _environment;
@@ -87,6 +89,11 @@ class Evaluator {
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
       AnonymousFunction() => _evaluateAnonymousFunction(node),
+      LengthAccess() => _evaluateLengthAccess(node),
+      IndexAccess() => _evaluateIndexAccess(node),
+      MemberAccess() => _evaluateMemberAccess(node),
+      ListLiteral() => _evaluateListLiteral(node),
+      BreakStatement() => throw BreakException(),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -113,8 +120,16 @@ class Evaluator {
   }
 
   dynamic _evaluateWhileStatement(WhileStatement node) {
-    while (_isTruthy(evaluateNode(node.condition))) {
-      evaluateNode(node.body);
+    try {
+      while (_isTruthy(evaluateNode(node.condition))) {
+        try {
+          evaluateNode(node.body);
+        } on BreakException {
+          break;
+        }
+      }
+    } on BreakException {
+      // Ignore break at the loop level
     }
     return null;
   }
@@ -129,11 +144,17 @@ class Evaluator {
       }
       while (
           node.condition == null || _isTruthy(evaluateNode(node.condition!))) {
-        evaluateNode(node.body);
-        if (node.increment != null) {
-          evaluateNode(node.increment!);
+        try {
+          evaluateNode(node.body);
+          if (node.increment != null) {
+            evaluateNode(node.increment!);
+          }
+        } on BreakException {
+          break;
         }
       }
+    } on BreakException {
+      // Ignore break at the loop level
     } finally {
       _environment = previousEnv;
     }
@@ -349,5 +370,67 @@ class Evaluator {
       MainAxisAlignmentSpaceEvenly() => flt.MainAxisAlignment.spaceEvenly,
       _ => flt.MainAxisAlignment.start,
     };
+  }
+
+  dynamic _evaluateLengthAccess(LengthAccess node) {
+    dynamic object = evaluateNode(node.object);
+    if (object is String) {
+      return object.length;
+    } else if (object is List) {
+      return object.length;
+    } else if (object is Map) {
+      return object.length;
+    } else {
+      throw EvaluationError('Cannot get length of ${object.runtimeType}');
+    }
+  }
+
+  dynamic _evaluateIndexAccess(IndexAccess node) {
+    dynamic object = evaluateNode(node.object);
+    dynamic index = evaluateNode(node.index);
+
+    if (object is List) {
+      if (index is! int) {
+        throw EvaluationError('List index must be an integer');
+      }
+      if (index < 0 || index >= object.length) {
+        throw EvaluationError('List index out of range');
+      }
+      return object[index];
+    } else if (object is Map) {
+      return object[index];
+    } else {
+      throw EvaluationError('Cannot use index access on ${object.runtimeType}');
+    }
+  }
+
+  dynamic _evaluateMemberAccess(MemberAccess node) {
+    dynamic object = evaluateNode(node.object);
+    String memberName = node.name.lexeme;
+
+    if (object is Map) {
+      if (object.containsKey(memberName)) {
+        return object[memberName];
+      }
+    }
+
+    // For custom objects or classes, you might need to implement a more sophisticated
+    // method to access properties or methods. This is a basic implementation.
+    if (object != null) {
+      try {
+        return (object as dynamic)[memberName];
+      } catch (e) {
+        throw EvaluationError(
+          "No $memberName method or property of ${object.runtimeType}",
+        );
+      }
+    }
+
+    throw EvaluationError(
+        'Cannot access member $memberName on ${object.runtimeType}');
+  }
+
+  dynamic _evaluateListLiteral(ListLiteral node) {
+    return node.elements.map((element) => evaluateNode(element)).toList();
   }
 }

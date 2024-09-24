@@ -181,5 +181,85 @@ void main() {
       final exprStmt = result[0] as ExpressionStatement;
       expect(exprStmt.expression, isA<Assignment>());
     });
+
+    test('parses member access', () {
+      final tokens = [
+        const Token(TokenType.identifier, 'obj', null, 1),
+        const Token(TokenType.dot, '.', null, 1),
+        const Token(TokenType.identifier, 'property', null, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
+      ];
+      final result = parser.parse(tokens);
+
+      expect(result.length, 1);
+      expect(result[0], isA<ExpressionStatement>());
+      final expr = (result[0] as ExpressionStatement).expression;
+      expect(expr, isA<MemberAccess>());
+      final memberAccess = expr as MemberAccess;
+      expect(memberAccess.object, isA<Variable>());
+      expect(memberAccess.name.lexeme, 'property');
+    });
+
+    test('parses index access', () {
+      final tokens = [
+        const Token(TokenType.identifier, 'arr', null, 1),
+        const Token(TokenType.leftBracket, '[', null, 1),
+        const Token(TokenType.integer, '0', 0, 1),
+        const Token(TokenType.rightBracket, ']', null, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
+      ];
+      final result = parser.parse(tokens);
+
+      expect(result.length, 1);
+      expect(result[0], isA<ExpressionStatement>());
+      final expr = (result[0] as ExpressionStatement).expression;
+      expect(expr, isA<IndexAccess>());
+      final indexAccess = expr as IndexAccess;
+      expect(indexAccess.object, isA<Variable>());
+      expect(indexAccess.index, isA<Literal>());
+    });
+
+    test('parses list literal', () {
+      final tokens = [
+        const Token(TokenType.leftBracket, '[', null, 1),
+        const Token(TokenType.integer, '1', 1, 1),
+        const Token(TokenType.comma, ',', null, 1),
+        const Token(TokenType.integer, '2', 2, 1),
+        const Token(TokenType.comma, ',', null, 1),
+        const Token(TokenType.integer, '3', 3, 1),
+        const Token(TokenType.rightBracket, ']', null, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
+      ];
+      final result = parser.parse(tokens);
+
+      expect(result.length, 1);
+      expect(result[0], isA<ExpressionStatement>());
+      final expr = (result[0] as ExpressionStatement).expression;
+      expect(expr, isA<ListLiteral>());
+      final listLiteral = expr as ListLiteral;
+      expect(listLiteral.elements.length, 3);
+      expect(listLiteral.elements.every((e) => e is Literal), true);
+    });
+
+    test('parses length access', () {
+      final tokens = [
+        const Token(TokenType.identifier, 'list', null, 1),
+        const Token(TokenType.dot, '.', null, 1),
+        const Token(TokenType.identifier, 'length', null, 1),
+        const Token(TokenType.semicolon, ';', null, 1),
+        const Token(TokenType.eof, '', null, 1),
+      ];
+      final result = parser.parse(tokens);
+
+      expect(result.length, 1);
+      expect(result[0], isA<ExpressionStatement>());
+      final expr = (result[0] as ExpressionStatement).expression;
+      expect(expr, isA<LengthAccess>());
+      final lengthAccess = expr as LengthAccess;
+      expect(lengthAccess.object, isA<Variable>());
+    });
   });
 }

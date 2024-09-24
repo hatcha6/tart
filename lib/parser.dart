@@ -72,11 +72,11 @@ class Parser {
           advance();
           return whileStatement();
         default:
-          throw error(peek(), "Expected declaration.");
+          return statement();
       }
     } catch (e) {
       synchronize();
-      return const EndOfFile();
+      throw error(peek(), "Expected declaration/statement.");
     }
   }
 
@@ -164,9 +164,17 @@ class Parser {
   AstNode statement() {
     if (match([TokenType.leftBrace])) {
       return block();
+    } else if (match([TokenType.tartBreak])) {
+      return breakStatement();
     } else {
       return expressionStatement();
     }
+  }
+
+  AstNode breakStatement() {
+    Token keyword = previous();
+    consume(TokenType.semicolon, "Expect ';' after 'break'.");
+    return BreakStatement(keyword);
   }
 
   AstNode ifStatement() {
@@ -344,7 +352,15 @@ class Parser {
       } else if (match([TokenType.dot])) {
         Token name =
             consume(TokenType.identifier, "Expect property name after '.'.");
-        expr = BinaryExpression(expr, name, Variable(name));
+        if (name.lexeme == 'length') {
+          expr = LengthAccess(expr);
+        } else {
+          expr = MemberAccess(expr, name);
+        }
+      } else if (match([TokenType.leftBracket])) {
+        AstNode index = expression();
+        consume(TokenType.rightBracket, "Expect ']' after index.");
+        expr = IndexAccess(expr, index);
       } else {
         break;
       }
@@ -394,6 +410,14 @@ class Parser {
       return anonymousFunction();
     }
 
+    if (match([TokenType.leftBracket])) {
+      return listOrSetLiteral();
+    }
+
+    if (match([TokenType.leftBrace])) {
+      return mapLiteral();
+    }
+
     throw error(peek(), "Expected expression.");
   }
 
@@ -408,6 +432,37 @@ class Parser {
     consume(TokenType.leftBrace, "Expect '{' before function body.");
     Block body = block();
     return AnonymousFunction(parameters, body);
+  }
+
+  AstNode listOrSetLiteral() {
+    List<AstNode> elements = [];
+    if (!check(TokenType.rightBracket)) {
+      do {
+        elements.add(expression());
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightBracket, "Expect ']' after list or set elements.");
+
+    // If we have a colon after the closing bracket, it's a set
+    if (match([TokenType.colon])) {
+      return SetLiteral(elements);
+    }
+
+    return ListLiteral(elements);
+  }
+
+  AstNode mapLiteral() {
+    List<MapEntry> entries = [];
+    if (!check(TokenType.rightBrace)) {
+      do {
+        AstNode key = expression();
+        consume(TokenType.colon, "Expect ':' after map key.");
+        AstNode value = expression();
+        entries.add(MapEntry(key, value));
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightBrace, "Expect '}' after map entries.");
+    return MapLiteral(entries);
   }
 
   bool match(List<TokenType> types) {
