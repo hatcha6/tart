@@ -86,6 +86,7 @@ class Evaluator {
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
+      AnonymousFunction() => _evaluateAnonymousFunction(node),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -196,7 +197,7 @@ class Evaluator {
         node.arguments.map((arg) => evaluateNode(arg)).toList();
 
     if (callee is FunctionDeclaration) {
-      return _callFunction(callee, arguments);
+      return callFunctionDeclaration(callee, arguments);
     } else if (callee is Function) {
       return callee(arguments);
     }
@@ -253,13 +254,23 @@ class Evaluator {
         ),
       ElevatedButton(child: final child, onPressed: final onPressed) =>
         flt.ElevatedButton(
-          onPressed: () => evaluateNode(onPressed),
+          onPressed: () {
+            if (onPressed is AnonymousFunction) {
+              callFunctionDeclaration(onPressed, onPressed.parameters);
+            } else {
+              callFunctionDeclaration(onPressed, onPressed.parameters);
+            }
+          },
           child: _evaluateWidget(child),
         ),
     };
   }
 
-  dynamic _callFunction(
+  dynamic _evaluateAnonymousFunction(AnonymousFunction node) {
+    return node;
+  }
+
+  dynamic callFunctionDeclaration(
       FunctionDeclaration declaration, List<dynamic> arguments) {
     Environment previousEnv = _environment;
     _environment = Environment(_globals);
@@ -282,7 +293,7 @@ class Evaluator {
   dynamic callFunction(String functionName, List arguments) {
     final function = _environment.getValue(functionName);
     if (function is FunctionDeclaration) {
-      return _callFunction(function, arguments);
+      return callFunctionDeclaration(function, arguments);
     } else if (function is Function) {
       return function(arguments);
     }

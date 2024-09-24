@@ -52,6 +52,24 @@ void main() {
       expect(funcDecl.body.statements, isEmpty);
     });
 
+    test('parses anonymous function declarations', () {
+      final tokens = [
+        const Token(TokenType.leftParen, '(', null, 1),
+        const Token(TokenType.rightParen, ')', null, 1),
+        const Token(TokenType.leftBrace, '{', null, 1),
+        const Token(TokenType.rightBrace, '}', null, 1),
+        const Token(TokenType.eof, '', null, 1),
+      ];
+      final result = parser.parse(tokens);
+
+      expect(result, isA<List<AstNode>>());
+      expect(result.length, 1);
+      expect(result[0], isA<AnonymousFunction>());
+      final funcDecl = result[0] as AnonymousFunction;
+      expect(funcDecl.parameters, isEmpty);
+      expect(funcDecl.body.statements, isEmpty);
+    });
+
     test('parses if statements', () {
       final tokens = [
         const Token(TokenType.tartIf, 'if', null, 1),

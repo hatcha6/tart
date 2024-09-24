@@ -2,11 +2,13 @@ library tart;
 
 import 'token.dart';
 import 'ast.dart';
+import 'dart:async';
 
 class Parser {
   List<Token> tokens = const [];
   int current = 0;
   Token? _nextToken;
+  final List<ParseError> errors = [];
 
   Parser();
 
@@ -18,6 +20,20 @@ class Parser {
       statements.add(declaration());
     }
     return statements;
+  }
+
+  Future<List<AstNode>> parseAsync(List<Token> tokens) async {
+    this.tokens = tokens;
+    current = 0;
+    List<Future<AstNode>> futures = [];
+
+    while (!isAtEnd()) {
+      futures.add(Future(() => declaration()));
+      // Skip to the next top-level declaration
+      synchronizeToNextDeclaration();
+    }
+
+    return await Future.wait(futures);
   }
 
   AstNode declaration() {
@@ -34,6 +50,9 @@ class Parser {
         case TokenType.tartFunction:
           advance();
           return functionDeclaration();
+        case TokenType.leftParen:
+          advance();
+          return anonymousFunction();
         case TokenType.identifier:
           if (peek().type == TokenType.leftParen) {
             advance();
@@ -53,7 +72,7 @@ class Parser {
           advance();
           return whileStatement();
         default:
-          return statement();
+          throw error(peek(), "Expected declaration.");
       }
     } catch (e) {
       synchronize();
@@ -66,23 +85,21 @@ class Parser {
         consume(TokenType.identifier, "Expect widget name after 'flutter::'.");
     consume(TokenType.leftParen, "Expect '(' after widget name.");
 
-    // Parse widget parameters
     Map<String, AstNode> parameters = {};
     if (!check(TokenType.rightParen)) {
       do {
         Token paramName =
             consume(TokenType.identifier, "Expect parameter name.");
         consume(TokenType.colon, "Expect ':' after parameter name.");
-        AstNode paramValue = expression();
+        AstNode paramValue = parameterValue();
         parameters[paramName.lexeme] = paramValue;
       } while (match([TokenType.comma]));
     }
     consume(TokenType.rightParen, "Expect ')' after widget parameters.");
 
-    // Create the appropriate AstWidget subclass based on the widget name
     switch (name.lexeme) {
       case 'Text':
-        return Text(name, (parameters['text'] as Literal).value as String);
+        return Text(name, (parameters['text'] as Literal).value);
       case 'Column':
         return Column(name, parameters['children'] as List<AstWidget>);
       case 'Row':
@@ -90,7 +107,7 @@ class Parser {
       case 'Container':
         return Container(name, parameters['child'] as AstWidget);
       case 'Image':
-        return Image(name, parameters['url'] as String);
+        return Image(name, (parameters['url'] as Literal).value);
       case 'Padding':
         return Padding(name, parameters['padding'] as EdgeInsets,
             parameters['child'] as AstWidget);
@@ -98,18 +115,25 @@ class Parser {
         return Center(name, parameters['child'] as AstWidget);
       case 'SizedBox':
         return SizedBox(name,
-            width: parameters['width'] as double?,
-            height: parameters['height'] as double?,
+            width: (parameters['width'] as Literal?)?.value.toDouble(),
+            height: (parameters['height'] as Literal?)?.value.toDouble(),
             child: parameters['child'] as AstWidget?);
       case 'Expanded':
         return Expanded(name, parameters['child'] as AstWidget,
-            flex: parameters['flex'] as int? ?? 1);
+            flex: (parameters['flex'] as Literal?)?.value as int? ?? 1);
       case 'ElevatedButton':
         return ElevatedButton(name, parameters['child'] as AstWidget,
             parameters['onPressed'] as FunctionDeclaration);
       default:
         throw error(name, "Unknown Flutter widget: ${name.lexeme}");
     }
+  }
+
+  AstNode parameterValue() {
+    if (match([TokenType.leftParen])) {
+      return anonymousFunction();
+    }
+    return expression();
   }
 
   AstNode varDeclaration() {
@@ -340,26 +364,50 @@ class Parser {
   }
 
   AstNode primary() {
-    if (match([TokenType.boolean])) return Literal(previous().literal);
     if (match([TokenType.tartNull])) return const Literal(null);
-    if (match([TokenType.integer, TokenType.double, TokenType.string])) {
+    if (match([
+      TokenType.integer,
+      TokenType.double,
+      TokenType.string,
+      TokenType.boolean
+    ])) {
       return Literal(previous().literal);
     }
-    if (match([TokenType.assign])) {
-      return Assignment(previous(), peek(), expression());
-    }
-    if (match([TokenType.flutterWidget])) {
-      return flutterWidgetDeclaration();
-    }
+
     if (match([TokenType.identifier])) return Variable(previous());
+
     if (match([TokenType.leftParen])) {
       AstNode expr = expression();
       consume(TokenType.rightParen, "Expect ')' after expression.");
       return expr;
     }
 
-    throw error(peek(),
-        "Expected expression, but found ${peek().type} (${peek().lexeme})");
+    if (match([TokenType.assign])) {
+      return Assignment(previous(), peek(), expression());
+    }
+
+    if (match([TokenType.flutterWidget])) {
+      return flutterWidgetDeclaration();
+    }
+
+    if (match([TokenType.leftParen])) {
+      return anonymousFunction();
+    }
+
+    throw error(peek(), "Expected expression.");
+  }
+
+  AstNode anonymousFunction() {
+    List<Token> parameters = [];
+    if (!check(TokenType.rightParen)) {
+      do {
+        parameters.add(consume(TokenType.identifier, "Expect parameter name."));
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightParen, "Expect ')' after parameters.");
+    consume(TokenType.leftBrace, "Expect '{' before function body.");
+    Block body = block();
+    return AnonymousFunction(parameters, body);
   }
 
   bool match(List<TokenType> types) {
@@ -402,8 +450,8 @@ class Parser {
   }
 
   Exception error(Token token, String message) {
-    // Report the error
-    return Exception(message);
+    errors.add(ParseError(token, message));
+    return ParseException(message);
   }
 
   void synchronize() {
@@ -422,4 +470,44 @@ class Parser {
       advance();
     }
   }
+
+  void synchronizeToNextDeclaration() {
+    while (!isAtEnd()) {
+      switch (peek().type) {
+        case TokenType.flutterWidget:
+        case TokenType.tartVar:
+        case TokenType.tartConst:
+        case TokenType.tartFinal:
+        case TokenType.tartFunction:
+          return;
+        default:
+          advance();
+      }
+    }
+  }
+}
+
+class ParseError {
+  final Token token;
+  final String message;
+
+  ParseError(this.token, this.message);
+
+  @override
+  String toString() {
+    if (token.type == TokenType.eof) {
+      return "Error at end: $message";
+    } else {
+      return "Error at '${token.lexeme}' (line ${token.line}): $message";
+    }
+  }
+}
+
+class ParseException implements Exception {
+  final String message;
+
+  ParseException(this.message);
+
+  @override
+  String toString() => message;
 }

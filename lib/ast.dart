@@ -1,6 +1,7 @@
 library tart;
 
 import 'token.dart';
+import 'dart:math';
 
 part 'widget_ast.dart';
 
@@ -112,4 +113,29 @@ class Variable extends AstNode {
   final Token name;
 
   const Variable(this.name);
+}
+
+class AnonymousFunction extends FunctionDeclaration {
+  static int _counter = 0;
+  static final Random _random = Random();
+
+  AnonymousFunction(List<Token> parameters, Block body)
+      : super(
+          Token(
+            TokenType.identifier,
+            '_anon_${_generateUniqueId()}',
+            null,
+            -1,
+          ),
+          parameters,
+          body,
+        );
+
+  static String _generateUniqueId() {
+    _counter++;
+    String randomString = String.fromCharCodes(
+      List.generate(8, (_) => _random.nextInt(26) + 97),
+    );
+    return '$randomString$_counter';
+  }
 }

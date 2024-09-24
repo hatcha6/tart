@@ -5,6 +5,7 @@ Tiny Dart, Big Impact! 🚀
 
 [![Pub Version](https://img.shields.io/pub/v/tart_dev.svg)](https://pub.dev/packages/tart_dev)
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/hatcha6/tart/graph/badge.svg?token=4H96A1D475)](https://codecov.io/gh/hatcha6/tart)
 
 ## 🌟 Features
 
@@ -36,17 +37,22 @@ Here's a quick example of how to use Tart:
 
 ```dart
 import 'package:tart_dev/tart.dart';
+
 void main() {
-    final source = 'var x = 42;';
-    final lexer = Lexer(source);
-    final tokens = lexer.scanTokens();
-    final parser = Parser(tokens);
-    final ast = parser.parse();
-    print('Tokens: $tokens');
-    print('AST: $ast');
+  final tart = Tart();
+  final source = 'var x = 42; print(x);';
+  
+  final (result, _) = tart.run(source);
+  print('Result: $result');
+
+  // With benchmarking
+  final (benchResult, benchmarks) = tart.run(source, benchmark: true);
+  print('Benchmark Result: $benchResult');
+  print('Lexer time: ${benchmarks?.lexerTime}s');
+  print('Parser time: ${benchmarks?.parserTime}s');
+  print('Evaluator time: ${benchmarks?.evaluatorTime}s');
 }
 ```
-
 
 For more examples, check out the `/example` folder in our GitHub repository.
 

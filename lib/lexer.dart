@@ -2,6 +2,7 @@ library tart;
 
 import 'dart:collection';
 import 'token.dart';
+import 'dart:isolate';
 
 class Lexer {
   String source = '';
@@ -62,6 +63,76 @@ class Lexer {
 
     tokens.add(_getCachedToken(TokenType.eof, "", null, line));
     return tokens;
+  }
+
+  static const int chunkSize = 1000; // Adjust based on your needs
+
+  Future<List<Token>> scanTokensAsync(String source) async {
+    this.source = source;
+    List<Token> allTokens = [];
+
+    int numChunks = (source.length / chunkSize).ceil();
+    List<Future<List<Token>>> futures = [];
+
+    for (int i = 0; i < numChunks; i++) {
+      int start = i * chunkSize;
+      int end = (i + 1) * chunkSize;
+      if (end > source.length) end = source.length;
+
+      futures.add(_processChunk(source.substring(start, end), start));
+    }
+
+    List<List<Token>> results = await Future.wait(futures);
+    for (var tokens in results) {
+      allTokens.addAll(tokens);
+    }
+
+    allTokens.sort((a, b) => a.line.compareTo(b.line));
+    return allTokens;
+  }
+
+  Future<List<Token>> _processChunk(String chunk, int offset) async {
+    return await Isolate.run(() {
+      final lexer = Lexer()
+        ..source = chunk
+        ..start = 0
+        ..current = 0
+        ..line = _calculateStartingLine(offset);
+
+      final tokens = <Token>[];
+
+      while (!lexer.isAtEnd()) {
+        lexer.scanNextToken();
+        if (lexer.hasNewToken()) {
+          tokens.add(_createAdjustedToken(lexer.getLastToken(), offset));
+        }
+      }
+
+      return tokens;
+    });
+  }
+
+  int _calculateStartingLine(int offset) => offset ~/ chunkSize;
+
+  bool hasNewToken() => tokens.isNotEmpty;
+
+  Token getLastToken() => tokens.removeLast();
+
+  Token _createAdjustedToken(Token token, int offset) {
+    return Token(
+      token.type,
+      token.lexeme,
+      token.literal,
+      _adjustLineNumber(token.line, offset),
+    );
+  }
+
+  int _adjustLineNumber(int line, int offset) =>
+      line + _calculateStartingLine(offset);
+
+  void scanNextToken() {
+    start = current;
+    scanToken();
   }
 
   void scanToken() {
