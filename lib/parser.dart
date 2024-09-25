@@ -12,9 +12,16 @@ class Parser {
 
   Parser();
 
-  List<AstNode> parse(List<Token> tokens) {
-    this.tokens = tokens;
+  void reset() {
+    tokens = const [];
     current = 0;
+    _nextToken = null;
+    errors.clear();
+  }
+
+  List<AstNode> parse(List<Token> tokens) {
+    reset();
+    this.tokens = tokens;
     List<AstNode> statements = [];
     while (!isAtEnd()) {
       statements.add(declaration());
@@ -23,8 +30,8 @@ class Parser {
   }
 
   Future<List<AstNode>> parseAsync(List<Token> tokens) async {
+    reset();
     this.tokens = tokens;
-    current = 0;
     List<Future<AstNode>> futures = [];
 
     while (!isAtEnd()) {
@@ -76,6 +83,8 @@ class Parser {
       }
     } catch (e) {
       synchronize();
+      // ignore: avoid_print
+      print(errors);
       throw error(peek(), "Expected declaration/statement.");
     }
   }
@@ -99,7 +108,7 @@ class Parser {
 
     switch (name.lexeme) {
       case 'Text':
-        return Text(name, (parameters['text'] as Literal).value);
+        return Text(name, parameters['text'] as AstNode);
       case 'Column':
         return Column(name, parameters['children'] as List<AstWidget>);
       case 'Row':
@@ -416,6 +425,13 @@ class Parser {
 
     if (match([TokenType.leftBrace])) {
       return mapLiteral();
+    }
+
+    if (match([TokenType.tartToString])) {
+      consume(TokenType.leftParen, "Expect '(' after 'toString'.");
+      AstNode expr = expression();
+      consume(TokenType.rightParen, "Expect ')' after expression in toString.");
+      return ToString(expr);
     }
 
     throw error(peek(), "Expected expression.");

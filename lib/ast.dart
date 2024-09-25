@@ -190,3 +190,9 @@ class BreakStatement extends AstNode {
 
   const BreakStatement(this.keyword);
 }
+
+class ToString extends AstNode {
+  final AstNode expression;
+
+  ToString(this.expression);
+}

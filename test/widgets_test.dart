@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:tart_dev/tart.dart';
@@ -79,5 +81,32 @@ return flutter::ElevatedButton(onPressed: () { x += 1; print('Button pressed!');
     await tester.pumpAndSettle();
 
     expect(interpreter.getGlobalVariable('x'), equals(1));
+  });
+
+  testWidgets('Tart can correctly run setState', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('x', 0);
+    const String tartScript = '''
+return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: toString(x)));''';
+
+    await tester.pumpWidget(
+      TartProvider(
+        tart: interpreter,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: TartStatefulWidget(
+              source: tartScript,
+              printBenchmarks: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('0'));
+    await tester.pumpAndSettle();
+
+    expect(interpreter.getGlobalVariable('x'), equals(1));
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsOneWidget);
   });
 }

@@ -73,6 +73,7 @@ class Evaluator {
   dynamic evaluateNode(AstNode node) {
     return switch (node) {
       VariableDeclaration() => _evaluateVariableDeclaration(node),
+      AnonymousFunction() => _evaluateAnonymousFunction(node),
       FunctionDeclaration() => _evaluateFunctionDeclaration(node),
       ExpressionStatement() => evaluateNode(node.expression),
       IfStatement() => _evaluateIfStatement(node),
@@ -88,12 +89,12 @@ class Evaluator {
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
-      AnonymousFunction() => _evaluateAnonymousFunction(node),
       LengthAccess() => _evaluateLengthAccess(node),
       IndexAccess() => _evaluateIndexAccess(node),
       MemberAccess() => _evaluateMemberAccess(node),
       ListLiteral() => _evaluateListLiteral(node),
       BreakStatement() => throw BreakException(),
+      ToString() => _evaluateToString(node),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -234,7 +235,7 @@ class Evaluator {
 
   flt.Widget _evaluateWidget(AstWidget node) {
     return switch (node) {
-      Text(text: final text) => flt.Text(text),
+      Text(text: final text) => flt.Text(evaluateNode(text)),
       Column(
         children: final children,
         mainAxisAlignment: final mainAxisAlignment,
@@ -432,5 +433,10 @@ class Evaluator {
 
   dynamic _evaluateListLiteral(ListLiteral node) {
     return node.elements.map((element) => evaluateNode(element)).toList();
+  }
+
+  String _evaluateToString(ToString node) {
+    dynamic value = evaluateNode(node.expression);
+    return value.toString();
   }
 }

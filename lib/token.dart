@@ -79,6 +79,7 @@ enum TokenType {
   eof,
   unknown,
   flutterWidget, // Add this new token type
+  tartToString,
 }
 
 class Token {

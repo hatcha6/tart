@@ -104,7 +104,7 @@ class TextStyle extends AstNode {
 }
 
 class Text extends AstWidget {
-  final String text;
+  final AstNode text;
 
   Text(super.name, this.text);
 }

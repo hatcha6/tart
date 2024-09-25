@@ -44,13 +44,24 @@ class Lexer {
     'true': TokenType.boolean,
     'false': TokenType.boolean,
     'null': TokenType.tartNull,
+    'toString': TokenType.tartToString,
   };
 
   static final Map<String, Token> _tokenCache = HashMap();
 
   Lexer();
 
+  void reset() {
+    source = '';
+    tokens.clear();
+    start = 0;
+    current = 0;
+    line = 1;
+    _lexemeBuffer.clear();
+  }
+
   List<Token> scanTokens(String source) {
+    reset();
     this.source = source;
     start = 0;
     current = 0;

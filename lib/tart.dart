@@ -9,6 +9,8 @@ export 'ast.dart';
 export 'evaluator.dart';
 
 import 'dart:io';
+import 'package:flutter/material.dart';
+
 import 'evaluator.dart';
 import 'lexer.dart';
 import 'parser.dart';
@@ -53,6 +55,8 @@ Memory Usage: ${memoryUsage.toStringAsFixed(2)} KB
 }
 
 class Tart {
+  final Lexer _lexer = Lexer();
+  final Parser _parser = Parser();
   final Evaluator evaluator;
   final Parser parser;
   final Lexer lexer;
@@ -63,9 +67,9 @@ class Tart {
         lexer = Lexer();
 
   dynamic run(String source) {
-    var tokens = lexer.scanTokens(source);
-    var nodes = parser.parse(tokens);
-    return evaluator.evaluate(nodes);
+    List<Token> tokens = _lexer.scanTokens(source);
+    List<AstNode> ast = _parser.parse(tokens);
+    return evaluator.evaluate(ast);
   }
 
   (dynamic, BenchmarkResults?) runWithBenchmark(String source) {
@@ -99,13 +103,13 @@ class Tart {
     int initialMemoryUsage = _getMemoryUsage();
 
     Stopwatch lexerStopwatch = Stopwatch()..start();
-    List<Token> tokens = lexer.scanTokens(source);
+    List<Token> tokens = _lexer.scanTokens(source);
     lexerStopwatch.stop();
     double lexerTime = lexerStopwatch.elapsedMicroseconds / 1000000;
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    List<AstNode> nodes = parser.parse(tokens);
+    List<AstNode> nodes = _parser.parse(tokens);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -139,13 +143,13 @@ class Tart {
     int initialMemoryUsage = _getMemoryUsage();
 
     Stopwatch lexerStopwatch = Stopwatch()..start();
-    List<Token> tokens = await lexer.scanTokensAsync(source);
+    List<Token> tokens = await _lexer.scanTokensAsync(source);
     lexerStopwatch.stop();
     double lexerTime = lexerStopwatch.elapsedMicroseconds / 1000000;
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    List<AstNode> nodes = await parser.parseAsync(tokens);
+    List<AstNode> nodes = await _parser.parseAsync(tokens);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -176,5 +180,76 @@ class Tart {
 
   int _getMemoryUsage() {
     return ProcessInfo.currentRss;
+  }
+}
+
+class TartProvider extends InheritedWidget {
+  final Tart tart;
+
+  const TartProvider({
+    super.key,
+    required this.tart,
+    required super.child,
+  });
+
+  static Tart of(BuildContext context) {
+    final TartProvider? provider =
+        context.dependOnInheritedWidgetOfExactType<TartProvider>();
+    assert(provider != null, 'No TartProvider found in context');
+    return provider!.tart;
+  }
+
+  @override
+  bool updateShouldNotify(TartProvider oldWidget) => tart != oldWidget.tart;
+}
+
+class TartStatefulWidget extends StatefulWidget {
+  final Map<String, dynamic>? environment;
+  final String source;
+  final bool printBenchmarks;
+
+  const TartStatefulWidget({
+    super.key,
+    required this.source,
+    this.environment,
+    this.printBenchmarks = false,
+  });
+
+  @override
+  State<TartStatefulWidget> createState() => _TartStatefulWidgetState();
+}
+
+class _TartStatefulWidgetState extends State<TartStatefulWidget> {
+  late Tart _tart;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tart = TartProvider.of(context);
+    if (widget.environment != null) {
+      widget.environment!.forEach((key, value) {
+        if (value is Function) {
+          _tart.defineGlobalFunction(key, value);
+        } else {
+          _tart.defineGlobalVariable(key, value);
+        }
+      });
+    }
+    _tart.defineGlobalFunction('setState', (List<dynamic> args) {
+      setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    dynamic result;
+    if (widget.printBenchmarks) {
+      final (res, benchmarks) = _tart.runWithBenchmark(widget.source);
+      print(benchmarks);
+      result = res;
+    } else {
+      result = _tart.run(widget.source);
+    }
+    return result as Widget;
   }
 }
