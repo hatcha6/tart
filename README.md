@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hatcha6/tart/main/assets/logo.svg" alt="Tart Logo" width="200"/>
+</p>
+
 # 🍋 Tart
 
 Tiny Dart, Big Impact! 🚀
