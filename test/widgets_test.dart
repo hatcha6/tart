@@ -12,7 +12,6 @@ void main() {
   });
 
   testWidgets('Tart can render Flutter widgets', (WidgetTester tester) async {
-    // Define a simple Tart script that creates a Text widget
     const String tartScript =
         '''return flutter::Text(text: 'Hello from Tart!');''';
 
@@ -20,7 +19,6 @@ void main() {
     print(benchmark);
     final widget = result as Widget;
 
-    // Build the widget tree
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -29,21 +27,25 @@ void main() {
       ),
     );
 
-    // Verify that the Text widget is rendered
     expect(find.text('Hello from Tart!'), findsOneWidget);
   });
 
   testWidgets('Tart can render nested Flutter widgets',
       (WidgetTester tester) async {
-    // Define a simple Tart script that creates a Text widget
-    const String tartScript =
-        '''return flutter::SizedBox(width: 100, height: 100, child: flutter::Center(child:flutter::Container(child: flutter::Text(text: 'Hello from Tart!'))));''';
+    const String tartScript = '''return flutter::SizedBox(
+            width: 100,
+            height: 100,
+            child: flutter::Center(
+              child: flutter::Container(
+                child: f:Text(text: 'Hello from Tart!'),
+              ),
+            ),
+          );''';
 
     final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
     print(benchmark);
     final widget = result as Widget;
 
-    // Build the widget tree
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -54,7 +56,6 @@ void main() {
       ),
     );
 
-    // Verify that the Text widget is rendered
     expect(find.text('Hello from Tart!'), findsOneWidget);
   });
 
@@ -108,5 +109,257 @@ return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flu
     expect(interpreter.getGlobalVariable('x'), equals(1));
     await tester.pumpAndSettle();
     expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render ListView', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::ListView(children: [
+  flutter::Text(text: 'Item 1'),
+  flutter::Text(text: 'Item 2'),
+  flutter::Text(text: 'Item 3'),
+]);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: widget,
+        ),
+      ),
+    );
+
+    expect(find.text('Item 1'), findsOneWidget);
+    expect(find.text('Item 2'), findsOneWidget);
+    expect(find.text('Item 3'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render GridView', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::GridView(
+  children: [
+    flutter::Text(text: 'Item 1'),
+    flutter::Text(text: 'Item 2'),
+  flutter::Text(text: 'Item 3'),
+]);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: widget,
+        ),
+      ),
+    );
+
+    expect(find.text('Item 1'), findsOneWidget);
+    expect(find.text('Item 2'), findsOneWidget);
+    expect(find.text('Item 3'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Column', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Column(
+  mainAxisAlignment: parameter::MainAxisAlignmentCenter(),
+  crossAxisAlignment: parameter::CrossAxisAlignmentStart(),
+  children: [
+    flutter::Text(text: 'Item 1'),
+    flutter::Text(text: 'Item 2'),
+    flutter::Text(text: 'Item 3'),
+  ]
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Item 1'), findsOneWidget);
+    expect(find.text('Item 2'), findsOneWidget);
+    expect(find.text('Item 3'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Row', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Row(
+  mainAxisAlignment: parameter::MainAxisAlignmentSpaceEvenly(),
+  crossAxisAlignment: parameter::CrossAxisAlignmentCenter(),
+  children: [
+    flutter::Text(text: 'Left'),
+    flutter::Text(text: 'Center'),
+    flutter::Text(text: 'Right'),
+  ]
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Left'), findsOneWidget);
+    expect(find.text('Center'), findsOneWidget);
+    expect(find.text('Right'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Container', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Container(
+  child: flutter::Text(text: 'Inside Container')
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Inside Container'), findsOneWidget);
+  });
+
+// This test needs more setup to work because flutter test doesn't allow (?) http
+// requests in unit tests
+//   testWidgets('Tart can render Image', (WidgetTester tester) async {
+//     const String tartScript = '''
+// return flutter::Image(url: 'https://storage.googleapis.com/cms-storage-bucket/c823e53b3a1a7b0d36a9.png');''';
+
+//     final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+//     print(benchmark);
+//     final widget = result as Widget;
+
+//     await tester.pumpWidget(
+//       MaterialApp(
+//         home: Scaffold(body: widget),
+//       ),
+//     );
+
+//     expect(
+//         find.image(const NetworkImage(
+//             'https://storage.googleapis.com/cms-storage-bucket/c823e53b3a1a7b0d36a9.png')),
+//         findsOneWidget);
+//   });
+
+  testWidgets('Tart can render Padding', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Padding(
+  padding: parameter::EdgeInsetsAll(value: 16.0),
+  child: flutter::Text(text: 'Padded Text')
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Padded Text'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Center', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Center(
+  child: flutter::Text(text: 'Centered Text')
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Centered Text'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render SizedBox', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::SizedBox(
+  width: 100,
+  height: 50,
+  child: flutter::Text(text: 'Inside SizedBox')
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Inside SizedBox'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Expanded', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Row(
+  children: [
+    flutter::Expanded(
+      flex: 2,
+      child: flutter::Text(text: 'Expanded Text')
+    ),
+    flutter::Text(text: 'Normal Text')
+  ]
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Expanded Text'), findsOneWidget);
+    expect(find.text('Normal Text'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render Card', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Card(
+  elevation: 4.0,
+  child: flutter::Text(text: 'Card Content')
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Card Content'), findsOneWidget);
   });
 }

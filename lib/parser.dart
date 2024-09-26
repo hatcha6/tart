@@ -46,6 +46,9 @@ class Parser {
   AstNode declaration() {
     try {
       switch (peek().type) {
+        case TokenType.flutterParam:
+          advance();
+          return flutterParameter();
         case TokenType.flutterWidget:
           advance();
           return flutterWidgetDeclaration();
@@ -89,34 +92,57 @@ class Parser {
     }
   }
 
+  Map<String, AstNode> _parseParameterNodes(
+      [bool consumeLeftParen = true, bool paramNames = true]) {
+    Map<String, AstNode> parameters = {};
+    if (consumeLeftParen) {
+      consume(TokenType.leftParen, "Expect '(' before parameters.");
+    }
+    if (!check(TokenType.rightParen)) {
+      do {
+        if (check(TokenType.rightParen)) break;
+        Token? paramName;
+        if (paramNames) {
+          paramName = consume(TokenType.identifier, "Expect parameter name.");
+          consume(TokenType.colon, "Expect ':' after parameter name.");
+        }
+        final paramValue = parameterValue();
+        parameters[paramName?.lexeme ?? paramValue.hashCode.toString()] =
+            paramValue;
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightParen, "Expect ')' after parameters.");
+    return parameters;
+  }
+
+  List<Token> _parseParameterTokens() {
+    List<Token> parameters = [];
+    if (!check(TokenType.rightParen)) {
+      do {
+        if (check(TokenType.rightParen)) break;
+        parameters.add(consume(TokenType.identifier, "Expect parameter name."));
+      } while (match([TokenType.comma]));
+    }
+    consume(TokenType.rightParen, "Expect ')' after parameters.");
+    return parameters;
+  }
+
   AstWidget flutterWidgetDeclaration() {
     Token name =
         consume(TokenType.identifier, "Expect widget name after 'flutter::'.");
-    consume(TokenType.leftParen, "Expect '(' after widget name.");
-
-    Map<String, AstNode> parameters = {};
-    if (!check(TokenType.rightParen)) {
-      do {
-        Token paramName =
-            consume(TokenType.identifier, "Expect parameter name.");
-        consume(TokenType.colon, "Expect ':' after parameter name.");
-        AstNode paramValue = parameterValue();
-        parameters[paramName.lexeme] = paramValue;
-      } while (match([TokenType.comma]));
-    }
-    consume(TokenType.rightParen, "Expect ')' after widget parameters.");
+    final parameters = _parseParameterNodes();
 
     switch (name.lexeme) {
       case 'Text':
-        return Text(name, parameters['text'] as AstNode);
+        return Text(name, parameters['text']!);
       case 'Column':
-        return Column(name, parameters['children'] as List<AstWidget>);
+        return Column(name, parameters['children']!);
       case 'Row':
-        return Row(name, parameters['children'] as List<AstWidget>);
+        return Row(name, parameters['children']!);
       case 'Container':
         return Container(name, parameters['child'] as AstWidget);
       case 'Image':
-        return Image(name, (parameters['url'] as Literal).value);
+        return Image(name, parameters['url']!);
       case 'Padding':
         return Padding(name, parameters['padding'] as EdgeInsets,
             parameters['child'] as AstWidget);
@@ -124,15 +150,28 @@ class Parser {
         return Center(name, parameters['child'] as AstWidget);
       case 'SizedBox':
         return SizedBox(name,
-            width: (parameters['width'] as Literal?)?.value.toDouble(),
-            height: (parameters['height'] as Literal?)?.value.toDouble(),
+            width: parameters['width'],
+            height: parameters['height'],
             child: parameters['child'] as AstWidget?);
       case 'Expanded':
-        return Expanded(name, parameters['child'] as AstWidget,
-            flex: (parameters['flex'] as Literal?)?.value as int? ?? 1);
+        return Expanded(
+          name,
+          parameters['child'] as AstWidget,
+          parameters['flex'],
+        );
       case 'ElevatedButton':
         return ElevatedButton(name, parameters['child'] as AstWidget,
             parameters['onPressed'] as FunctionDeclaration);
+      case 'Card':
+        return Card(
+            name, parameters['child'] as AstWidget, parameters['elevation']);
+      case 'ListView':
+        return ListView(name, parameters['children'] as AstNode);
+      case 'GridView':
+        final optionalParam = parameters['maxCrossAxisExtent'];
+        final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
+        return GridView(
+            name, parameters['children'] as AstNode, mainCrossAxisExtent);
       default:
         throw error(name, "Unknown Flutter widget: ${name.lexeme}");
     }
@@ -142,7 +181,105 @@ class Parser {
     if (match([TokenType.leftParen])) {
       return anonymousFunction();
     }
+    if (match([TokenType.flutterParam])) {
+      return flutterParameter();
+    }
     return expression();
+  }
+
+  AstNode flutterParameter() {
+    Token name = consume(TokenType.identifier,
+        "Expect Flutter parameter type after 'parameter::'.");
+
+    if (name.lexeme.contains('EdgeInsets')) {
+      return parseEdgeInsets(name);
+    } else if (name.lexeme.contains('MainAxisAlignment')) {
+      return parseMainAxisAlignment(name);
+    } else if (name.lexeme.contains('CrossAxisAlignment')) {
+      return parseCrossAxisAlignment(name);
+    } else {
+      throw error(name, "Unknown Flutter parameter type: ${name.lexeme}");
+    }
+  }
+
+  EdgeInsets parseEdgeInsets(Token name) {
+    final parameters = _parseParameterNodes();
+
+    EdgeInsets result;
+    switch (name.lexeme) {
+      case 'EdgeInsetsAll':
+        result = EdgeInsetsAll(parameters['value']!);
+        break;
+      case 'EdgeInsetsSymmetric':
+        result = EdgeInsetsSymmetric(
+            parameters['horizontal'], parameters['vertical']);
+        break;
+      case 'EdgeInsetsOnly':
+        result = EdgeInsetsOnly(parameters['top'], parameters['right'],
+            parameters['bottom'], parameters['left']);
+        break;
+      default:
+        throw error(name, "Unknown EdgeInsets method: ${name.lexeme}");
+    }
+
+    return result;
+  }
+
+  MainAxisAlignment parseMainAxisAlignment(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after EdgeInsets method.");
+    MainAxisAlignment result;
+    switch (name.lexeme) {
+      case 'MainAxisAlignmentStart':
+        result = const MainAxisAlignmentStart();
+        break;
+      case 'MainAxisAlignmentCenter':
+        result = const MainAxisAlignmentCenter();
+        break;
+      case 'MainAxisAlignmentEnd':
+        result = const MainAxisAlignmentEnd();
+        break;
+      case 'MainAxisAlignmentSpaceBetween':
+        result = const MainAxisAlignmentSpaceBetween();
+        break;
+      case 'MainAxisAlignmentSpaceAround':
+        result = const MainAxisAlignmentSpaceAround();
+        break;
+      case 'MainAxisAlignmentSpaceEvenly':
+        result = const MainAxisAlignmentSpaceEvenly();
+        break;
+      default:
+        throw error(name, "Unknown MainAxisAligment method: ${name.lexeme}");
+    }
+
+    consume(TokenType.rightParen, "Expect ')' after EdgeInsets method.");
+    return result;
+  }
+
+  CrossAxisAlignment parseCrossAxisAlignment(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after EdgeInsets method.");
+    CrossAxisAlignment result;
+    switch (name.lexeme) {
+      case 'CrossAxisAlignmentStart':
+        result = const CrossAxisAlignmentStart();
+        break;
+      case 'CrossAxisAlignmentCenter':
+        result = const CrossAxisAlignmentCenter();
+        break;
+      case 'CrossAxisAlignmentEnd':
+        result = const CrossAxisAlignmentEnd();
+        break;
+      case 'CrossAxisAlignmentStretch':
+        result = const CrossAxisAlignmentStretch();
+        break;
+      case 'CrossAxisAlignmentBaseline':
+        result = const CrossAxisAlignmentBaseline();
+        break;
+      default:
+        throw error(name, "Unknown CrossAxisAligment method: ${name.lexeme}");
+    }
+
+    consume(TokenType.rightParen, "Expect ')' after EdgeInsets parameters.");
+    return result;
   }
 
   AstNode varDeclaration() {
@@ -158,13 +295,7 @@ class Parser {
   AstNode functionDeclaration() {
     Token name = consume(TokenType.identifier, "Expect function name.");
     consume(TokenType.leftParen, "Expect '(' after function name.");
-    List<Token> parameters = [];
-    if (!check(TokenType.rightParen)) {
-      do {
-        parameters.add(consume(TokenType.identifier, "Expect parameter name."));
-      } while (match([TokenType.comma]));
-    }
-    consume(TokenType.rightParen, "Expect ')' after parameters.");
+    final parameters = _parseParameterTokens();
     consume(TokenType.leftBrace, "Expect '{' before function body.");
     final body = block();
     return FunctionDeclaration(name, parameters, body);
@@ -378,14 +509,8 @@ class Parser {
   }
 
   AstNode finishCall(AstNode callee) {
-    List<AstNode> arguments = [];
-    if (!check(TokenType.rightParen)) {
-      do {
-        arguments.add(expression());
-      } while (match([TokenType.comma]));
-    }
-    Token paren = consume(TokenType.rightParen, "Expect ')' after arguments.");
-    return CallExpression(callee, paren, arguments);
+    Map<String, AstNode> args = _parseParameterNodes(false, false);
+    return CallExpression(callee, previous(), args.values.toList());
   }
 
   AstNode primary() {
@@ -415,6 +540,10 @@ class Parser {
       return flutterWidgetDeclaration();
     }
 
+    if (match([TokenType.flutterParam])) {
+      return flutterParameter();
+    }
+
     if (match([TokenType.leftParen])) {
       return anonymousFunction();
     }
@@ -438,13 +567,7 @@ class Parser {
   }
 
   AstNode anonymousFunction() {
-    List<Token> parameters = [];
-    if (!check(TokenType.rightParen)) {
-      do {
-        parameters.add(consume(TokenType.identifier, "Expect parameter name."));
-      } while (match([TokenType.comma]));
-    }
-    consume(TokenType.rightParen, "Expect ')' after parameters.");
+    List<Token> parameters = _parseParameterTokens();
     consume(TokenType.leftBrace, "Expect '{' before function body.");
     Block body = block();
     return AnonymousFunction(parameters, body);
@@ -454,6 +577,7 @@ class Parser {
     List<AstNode> elements = [];
     if (!check(TokenType.rightBracket)) {
       do {
+        if (check(TokenType.rightBracket)) break;
         elements.add(expression());
       } while (match([TokenType.comma]));
     }

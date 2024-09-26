@@ -78,7 +78,8 @@ enum TokenType {
   // Special
   eof,
   unknown,
-  flutterWidget, // Add this new token type
+  flutterWidget,
+  flutterParam,
   tartToString,
 }
 

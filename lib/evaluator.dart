@@ -244,7 +244,7 @@ class Evaluator {
         flt.Column(
           mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
           crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
-          children: children.map((child) => _evaluateWidget(child)).toList(),
+          children: _evaluateListOfWidgets(children),
         ),
       Row(
         children: final children,
@@ -254,11 +254,11 @@ class Evaluator {
         flt.Row(
           mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
           crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
-          children: children.map((child) => _evaluateWidget(child)).toList(),
+          children: _evaluateListOfWidgets(children),
         ),
       Container(child: final child) =>
         flt.Container(child: _evaluateWidget(child)),
-      Image(url: final url) => flt.Image.network(url),
+      Image(url: final url) => flt.Image.network(evaluateNode(url)),
       Padding(padding: final padding, child: final child) => flt.Padding(
           padding: _convertEdgeInsets(padding),
           child: _evaluateWidget(child),
@@ -266,12 +266,12 @@ class Evaluator {
       Center(child: final child) => flt.Center(child: _evaluateWidget(child)),
       SizedBox(width: final width, height: final height, child: final child) =>
         flt.SizedBox(
-          width: width,
-          height: height,
+          width: width != null ? evaluateNode(width).toDouble() : null,
+          height: height != null ? evaluateNode(height).toDouble() : null,
           child: child != null ? _evaluateWidget(child) : null,
         ),
       Expanded(child: final child, flex: final flex) => flt.Expanded(
-          flex: flex,
+          flex: flex != null ? evaluateNode(flex) : null,
           child: _evaluateWidget(child),
         ),
       ElevatedButton(child: final child, onPressed: final onPressed) =>
@@ -284,6 +284,23 @@ class Evaluator {
             }
           },
           child: _evaluateWidget(child),
+        ),
+      Card(child: final child, elevation: final elevation) => flt.Card(
+          elevation: elevation != null ? evaluateNode(elevation) : null,
+          child: _evaluateWidget(child),
+        ),
+      ListView(children: final children) => flt.ListView(
+          children: _evaluateListOfWidgets(children),
+        ),
+      GridView(
+        children: final children,
+        maxCrossAxisExtent: final maxCrossAxisExtent
+      ) =>
+        flt.GridView(
+          gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: evaluateNode(maxCrossAxisExtent),
+          ),
+          children: _evaluateListOfWidgets(children),
         ),
     };
   }
@@ -341,10 +358,10 @@ class Evaluator {
 
   flt.EdgeInsets _convertEdgeInsets(EdgeInsets padding) {
     return flt.EdgeInsets.fromLTRB(
-      padding.left,
-      padding.top,
-      padding.right,
-      padding.bottom,
+      padding.left != null ? evaluateNode(padding.left!) : 0,
+      padding.top != null ? evaluateNode(padding.top!) : 0,
+      padding.right != null ? evaluateNode(padding.right!) : 0,
+      padding.bottom != null ? evaluateNode(padding.bottom!) : 0,
     );
   }
 
@@ -438,5 +455,24 @@ class Evaluator {
   String _evaluateToString(ToString node) {
     dynamic value = evaluateNode(node.expression);
     return value.toString();
+  }
+
+  List<flt.Widget> _evaluateListOfWidgets(AstNode children) {
+    if (children is ListLiteral) {
+      return children.elements
+          .map((child) => child is AstWidget
+              ? _evaluateWidget(child)
+              : flt.Text(evaluateNode(child).toString()))
+          .toList();
+    } else {
+      final evaluatedChildren = evaluateNode(children);
+      if (evaluatedChildren is List) {
+        return evaluatedChildren
+            .map((child) =>
+                child is flt.Widget ? child : flt.Text(child.toString()))
+            .toList();
+      }
+      throw EvaluationError('Expected a list of widgets or a ListLiteral');
+    }
   }
 }

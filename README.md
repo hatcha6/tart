@@ -9,11 +9,15 @@ Tiny Dart, Big Impact! 🚀
 
 ## 🌟 Features
 
-- 🎯 Lightweight Dart parser
-- 🧩 Modular and extensible design
-- 🚦 Comprehensive token handling
-- 🌳 Abstract Syntax Tree (AST) generation
-- 🧪 Thoroughly tested
+- 🎯 Lightweight Dart parser with Flutter widget support
+- 🧩 Modular and extensible design with asynchronous parsing
+- 🚦 Comprehensive token handling and caching
+- 🌳 Abstract Syntax Tree (AST) generation for Dart and Flutter widgets
+- 🚀 Asynchronous lexing and parsing for improved performance
+- 🧪 Thoroughly tested with benchmarking capabilities
+- 🔄 Dynamic code execution in Flutter applications
+- 🖼️ Flutter widget creation from Tart code
+- 🔍 Detailed error reporting and synchronization
 
 ## 🚀 Getting Started
 
@@ -46,11 +50,13 @@ void main() {
   print('Result: $result');
 
   // With benchmarking
-  final (benchResult, benchmarks) = tart.run(source, benchmark: true);
-  print('Benchmark Result: $benchResult');
+  final (result, benchmarks) = tart.run(source, benchmark: true);
+  print('Benchmark Result: $result');
   print('Lexer time: ${benchmarks?.lexerTime}s');
   print('Parser time: ${benchmarks?.parserTime}s');
   print('Evaluator time: ${benchmarks?.evaluatorTime}s');
+
+  return runApp(result)
 }
 ```
 
@@ -60,10 +66,14 @@ For more examples, check out the `/example` folder in our GitHub repository.
 
 Tart provides the following main classes:
 
-- `Lexer`:  Tokenizes the input source code
+- `Lexer`: Tokenizes the input source code
 - `Parser`: Generates an AST from tokens
-- `Token`:  Represents individual lexical units
-- `AST`:    Various AST node classes for different language constructs
+- `Token`: Represents individual lexical units
+- `AST`: Various AST node classes for different language constructs
+- `Evaluator`: Executes the parsed AST
+- `Tart`: Main class for running Tart code
+- `TartProvider`: Flutter widget for providing Tart instance
+- `TartStatefulWidget`: Flutter widget for rendering Tart code
 
 For detailed API documentation, visit our [API reference page](https://pub.dev/documentation/tart_dev/latest/).
 

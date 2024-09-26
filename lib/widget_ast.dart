@@ -7,21 +7,25 @@ sealed class AstWidget extends AstNode {
 }
 
 class EdgeInsets extends AstNode {
-  final double top;
-  final double right;
-  final double bottom;
-  final double left;
+  final AstNode? top;
+  final AstNode? right;
+  final AstNode? bottom;
+  final AstNode? left;
 
-  EdgeInsets(this.top, this.right, this.bottom, this.left);
+  const EdgeInsets(this.top, this.right, this.bottom, this.left);
 }
 
 class EdgeInsetsAll extends EdgeInsets {
-  EdgeInsetsAll(double value) : super(value, value, value, value);
+  EdgeInsetsAll(AstNode value) : super(value, value, value, value);
 }
 
 class EdgeInsetsSymmetric extends EdgeInsets {
-  EdgeInsetsSymmetric(double horizontal, double vertical)
+  EdgeInsetsSymmetric(AstNode? horizontal, AstNode? vertical)
       : super(vertical, horizontal, vertical, horizontal);
+}
+
+class EdgeInsetsOnly extends EdgeInsets {
+  const EdgeInsetsOnly(super.top, super.right, super.bottom, super.left);
 }
 
 class MainAxisAlignment extends AstNode {
@@ -77,42 +81,42 @@ class CrossAxisAlignmentBaseline extends CrossAxisAlignment {
 }
 
 class Color extends AstNode {
-  final int value;
+  final AstNode value;
 
-  Color(this.value);
+  const Color(this.value);
 }
 
 class FontWeight extends AstNode {
-  FontWeight();
+  const FontWeight();
 }
 
 class FontWeightBold extends FontWeight {
-  FontWeightBold();
+  const FontWeightBold();
 }
 
 class FontWeightNormal extends FontWeight {
-  FontWeightNormal();
+  const FontWeightNormal();
 }
 
 class TextStyle extends AstNode {
-  final String? fontFamily;
-  final double? fontSize;
-  final Color? color;
+  final AstNode? fontFamily;
+  final AstNode? fontSize;
+  final AstNode? color;
   final FontWeight? fontWeight;
 
-  TextStyle(this.fontFamily, this.fontSize, this.color, this.fontWeight);
+  const TextStyle(this.fontFamily, this.fontSize, this.color, this.fontWeight);
 }
 
 class Text extends AstWidget {
   final AstNode text;
 
-  Text(super.name, this.text);
+  const Text(super.name, this.text);
 }
 
 class Column extends AstWidget {
   final MainAxisAlignment? mainAxisAlignment;
   final CrossAxisAlignment? crossAxisAlignment;
-  final List<AstWidget> children;
+  final AstNode children;
 
   const Column(
     super.name,
@@ -125,9 +129,9 @@ class Column extends AstWidget {
 class Row extends AstWidget {
   final MainAxisAlignment? mainAxisAlignment;
   final CrossAxisAlignment? crossAxisAlignment;
-  final List<AstWidget> children;
+  final AstNode children;
 
-  Row(
+  const Row(
     super.name,
     this.children, [
     this.mainAxisAlignment,
@@ -138,46 +142,66 @@ class Row extends AstWidget {
 class Container extends AstWidget {
   final AstWidget child;
 
-  Container(super.name, this.child);
+  const Container(super.name, this.child);
 }
 
 class Image extends AstWidget {
-  final String url;
+  final AstNode url;
 
-  Image(super.name, this.url);
+  const Image(super.name, this.url);
 }
 
 class Padding extends AstWidget {
   final EdgeInsets padding;
   final AstWidget child;
 
-  Padding(super.name, this.padding, this.child);
+  const Padding(super.name, this.padding, this.child);
 }
 
 class Center extends AstWidget {
   final AstWidget child;
 
-  Center(super.name, this.child);
+  const Center(super.name, this.child);
 }
 
 class SizedBox extends AstWidget {
-  final double? width;
-  final double? height;
+  final AstNode? width;
+  final AstNode? height;
   final AstWidget? child;
 
-  SizedBox(super.name, {this.width, this.height, this.child});
+  const SizedBox(super.name, {this.width, this.height, this.child});
 }
 
 class Expanded extends AstWidget {
-  final int flex;
+  final AstNode? flex;
   final AstWidget child;
 
-  Expanded(super.name, this.child, {this.flex = 1});
+  const Expanded(super.name, this.child, [this.flex]);
 }
 
 class ElevatedButton extends AstWidget {
   final AstWidget child;
   final FunctionDeclaration onPressed;
 
-  ElevatedButton(super.name, this.child, this.onPressed);
+  const ElevatedButton(super.name, this.child, this.onPressed);
+}
+
+class Card extends AstWidget {
+  final AstWidget child;
+  final AstNode? elevation;
+
+  const Card(super.name, this.child, [this.elevation]);
+}
+
+class ListView extends AstWidget {
+  final AstNode children;
+
+  const ListView(super.name, this.children);
+}
+
+class GridView extends AstWidget {
+  final AstNode maxCrossAxisExtent;
+  final AstNode children;
+
+  const GridView(super.name, this.children, this.maxCrossAxisExtent);
 }

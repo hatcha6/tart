@@ -15,6 +15,8 @@ class Lexer {
   static final Map<String, TokenType> keywords = {
     'flutter::': TokenType.flutterWidget,
     'f:': TokenType.flutterWidget, // Add the new shorthand
+    'parameter::': TokenType.flutterParam,
+    'p:': TokenType.flutterParam,
     'function': TokenType.tartFunction,
     'if': TokenType.tartIf,
     'else': TokenType.tartElse,
@@ -172,16 +174,7 @@ class Lexer {
         addToken(TokenType.semicolon);
         break;
       case ':':
-        if (match(':')) {
-          if (source.substring(start - 'flutter'.length, current - 2) ==
-              'flutter') {
-            addToken(TokenType.flutterWidget);
-          } else {
-            addToken(TokenType.colon);
-          }
-        } else {
-          addToken(TokenType.colon);
-        }
+        addToken(TokenType.colon);
         break;
       case ',':
         addToken(TokenType.comma);
@@ -257,9 +250,22 @@ class Lexer {
       case "'":
         string(c);
         break;
+      case 'p':
+        if (match(':')) {
+          addToken(TokenType.flutterParam);
+        } else if (source.length >= current + 10 &&
+            source.substring(current - 1, current + 10) == 'parameter::') {
+          advance(10);
+          addToken(TokenType.flutterParam);
+        } else {
+          identifier();
+        }
+        break;
       case 'f':
         if (match(':')) {
           addToken(TokenType.flutterWidget);
+        } else if (match('p')) {
+          addToken(TokenType.flutterParam);
         } else if (source.length >= current + 8 &&
             source.substring(current - 1, current + 8) == 'flutter::') {
           advance(8);
