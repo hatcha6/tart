@@ -55,9 +55,10 @@ class BreakException implements Exception {}
 class Evaluator {
   final Environment _globals = Environment();
   late Environment _environment;
+  bool _isGlobalScope = true;
 
   Evaluator() {
-    _environment = Environment(_globals);
+    _environment = _globals;
     // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
   }
@@ -102,7 +103,11 @@ class Evaluator {
   dynamic _evaluateVariableDeclaration(VariableDeclaration node) {
     dynamic value =
         node.initializer != null ? evaluateNode(node.initializer!) : null;
-    _environment.define(node.name.lexeme, value);
+    if (_isGlobalScope) {
+      _globals.define(node.name.lexeme, value);
+    } else {
+      _environment.define(node.name.lexeme, value);
+    }
     return value;
   }
 
@@ -112,15 +117,30 @@ class Evaluator {
   }
 
   dynamic _evaluateIfStatement(IfStatement node) {
-    if (_isTruthy(evaluateNode(node.condition))) {
-      return evaluateNode(node.thenBranch);
-    } else if (node.elseBranch != null) {
-      return evaluateNode(node.elseBranch!);
+    Environment previousEnv = _environment;
+    _environment = Environment(_environment);
+    bool wasGlobalScope = _isGlobalScope;
+    _isGlobalScope = false;
+
+    try {
+      if (_isTruthy(evaluateNode(node.condition))) {
+        return evaluateNode(node.thenBranch);
+      } else if (node.elseBranch != null) {
+        return evaluateNode(node.elseBranch!);
+      }
+    } finally {
+      _environment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
     }
     return null;
   }
 
   dynamic _evaluateWhileStatement(WhileStatement node) {
+    Environment previousEnv = _environment;
+    _environment = Environment(_environment);
+    bool wasGlobalScope = _isGlobalScope;
+    _isGlobalScope = false;
+
     try {
       while (_isTruthy(evaluateNode(node.condition))) {
         try {
@@ -131,6 +151,9 @@ class Evaluator {
       }
     } on BreakException {
       // Ignore break at the loop level
+    } finally {
+      _environment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
     }
     return null;
   }
@@ -138,6 +161,8 @@ class Evaluator {
   dynamic _evaluateForStatement(ForStatement node) {
     Environment previousEnv = _environment;
     _environment = Environment(_environment);
+    bool wasGlobalScope = _isGlobalScope;
+    _isGlobalScope = false;
 
     try {
       if (node.initializer != null) {
@@ -158,6 +183,7 @@ class Evaluator {
       // Ignore break at the loop level
     } finally {
       _environment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
     }
     return null;
   }
@@ -170,12 +196,18 @@ class Evaluator {
   dynamic _evaluateBlock(Block node) {
     Environment previousEnv = _environment;
     _environment = Environment(_environment);
+    bool wasGlobalScope = _isGlobalScope;
+    _isGlobalScope = false;
 
     dynamic value;
-    for (var statement in node.statements) {
-      value = evaluateNode(statement);
+    try {
+      for (var statement in node.statements) {
+        value = evaluateNode(statement);
+      }
+    } finally {
+      _environment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
     }
-    _environment = previousEnv;
     return value;
   }
 
@@ -276,13 +308,10 @@ class Evaluator {
         ),
       ElevatedButton(child: final child, onPressed: final onPressed) =>
         flt.ElevatedButton(
-          onPressed: () {
-            if (onPressed is AnonymousFunction) {
-              callFunctionDeclaration(onPressed, onPressed.parameters);
-            } else {
-              callFunctionDeclaration(onPressed, onPressed.parameters);
-            }
-          },
+          onPressed: () => callFunctionDeclaration(
+            onPressed,
+            onPressed.parameters,
+          ),
           child: _evaluateWidget(child),
         ),
       Card(child: final child, elevation: final elevation) => flt.Card(
@@ -302,6 +331,38 @@ class Evaluator {
           ),
           children: _evaluateListOfWidgets(children),
         ),
+      ListViewBuilder(
+        itemBuilder: final itemBuilder,
+        itemCount: final itemCount
+      ) =>
+        flt.ListView.builder(
+          itemBuilder: (context, index) {
+            final previousEnvironment = _environment;
+            _environment.define('index', index);
+            final result = callFunctionDeclaration(itemBuilder, [index]);
+            _environment = previousEnvironment;
+            return result;
+          },
+          itemCount: evaluateNode(itemCount),
+        ),
+      GridViewBuilder(
+        itemBuilder: final itemBuilder,
+        itemCount: final itemCount,
+        maxCrossAxisExtent: final maxCrossAxisExtent
+      ) =>
+        flt.GridView.builder(
+          itemBuilder: (context, index) {
+            final previousEnvironment = _environment;
+            _environment.define('index', index);
+            final result = callFunctionDeclaration(itemBuilder, [index]);
+            _environment = previousEnvironment;
+            return result;
+          },
+          itemCount: evaluateNode(itemCount),
+          gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: evaluateNode(maxCrossAxisExtent),
+          ),
+        ),
     };
   }
 
@@ -313,14 +374,19 @@ class Evaluator {
       FunctionDeclaration declaration, List<dynamic> arguments) {
     Environment previousEnv = _environment;
     _environment = Environment(_globals);
+    bool wasGlobalScope = _isGlobalScope;
+    _isGlobalScope = false;
 
-    for (int i = 0; i < declaration.parameters.length; i++) {
-      _environment.define(declaration.parameters[i].lexeme, arguments[i]);
+    try {
+      for (int i = 0; i < declaration.parameters.length; i++) {
+        _environment.define(declaration.parameters[i].lexeme, arguments[i]);
+      }
+
+      return evaluateNode(declaration.body);
+    } finally {
+      _environment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
     }
-
-    final value = evaluateNode(declaration.body);
-    _environment = previousEnv;
-    return value;
   }
 
   bool _isTruthy(dynamic value) {

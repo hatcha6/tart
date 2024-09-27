@@ -362,4 +362,84 @@ return flutter::Card(
 
     expect(find.text('Card Content'), findsOneWidget);
   });
+
+  testWidgets('Tart can render ListViewBuilder', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('items', [
+      'Item 0',
+      'Item 1',
+      'Item 2',
+      'Item 3',
+      'Item 4',
+      'Item 5',
+      'Item 6',
+      'Item 7',
+      'Item 8',
+      'Item 9'
+    ]);
+    const String tartScript = '''
+return flutter::ListViewBuilder(
+  itemBuilder: (index) {
+    return flutter::Text(text: items[index]);
+  },
+  itemCount: items.length,
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Item 0'), findsOneWidget);
+    expect(find.text('Item 1'), findsOneWidget);
+    expect(find.text('Item 2'), findsOneWidget);
+    expect(find.text('Item 3'), findsOneWidget);
+    expect(find.text('Item 4'), findsOneWidget);
+    expect(find.text('Item 5'), findsOneWidget);
+    expect(find.text('Item 6'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render ListViewBuilder', (WidgetTester tester) async {
+    const String tartScript = '''
+var items = [
+      'Item 0',
+      'Item 1',
+      'Item 2',
+      'Item 3',
+      'Item 4',
+      'Item 5',
+      'Item 6',
+      'Item 7',
+      'Item 8',
+      'Item 9'
+    ];
+return flutter::GridViewBuilder(
+  itemBuilder: (index) {
+    return flutter::Text(text: items[index]);
+  },
+  itemCount: items.length,
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Item 0'), findsOneWidget);
+    expect(find.text('Item 1'), findsOneWidget);
+    expect(find.text('Item 2'), findsOneWidget);
+    expect(find.text('Item 3'), findsOneWidget);
+    expect(find.text('Item 4'), findsOneWidget);
+    expect(find.text('Item 5'), findsOneWidget);
+    expect(find.text('Item 6'), findsOneWidget);
+  });
 }

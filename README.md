@@ -29,7 +29,7 @@ Add `tart_dev` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    tart_dev: ^0.0.1
+    tart_dev: ^0.0.3
 ```
 
 then run:

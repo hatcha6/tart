@@ -172,6 +172,19 @@ class Parser {
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
         return GridView(
             name, parameters['children'] as AstNode, mainCrossAxisExtent);
+      case 'ListViewBuilder':
+        return ListViewBuilder(
+            name,
+            parameters['itemBuilder'] as FunctionDeclaration,
+            parameters['itemCount'] as AstNode);
+      case 'GridViewBuilder':
+        final optionalParam = parameters['maxCrossAxisExtent'];
+        final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
+        return GridViewBuilder(
+            name,
+            parameters['itemBuilder'] as FunctionDeclaration,
+            parameters['itemCount'] as AstNode,
+            mainCrossAxisExtent);
       default:
         throw error(name, "Unknown Flutter widget: ${name.lexeme}");
     }

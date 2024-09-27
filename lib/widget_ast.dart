@@ -1,5 +1,21 @@
 part of 'ast.dart';
 
+/// Represents an abstract syntax tree node for a Flutter widget.
+///
+/// To add a new widget:
+/// 1. Create a new subclass of [AstWidget] in this file.
+/// 2. In [Parser], add a new case to the [flutterWidgetDeclaration] method
+///    to parse the new widget type.
+/// 3. In [Evaluator], add a new case to the [_evaluateWidget] method
+///    to evaluate and create the corresponding Flutter widget.
+///
+/// Example:
+/// ```dart
+/// class MyNewWidget extends AstWidget {
+///   final AstNode someProperty;
+///   const MyNewWidget(Token name, this.someProperty) : super(name);
+/// }
+/// ```
 sealed class AstWidget extends AstNode {
   final Token name;
 
@@ -204,4 +220,24 @@ class GridView extends AstWidget {
   final AstNode children;
 
   const GridView(super.name, this.children, this.maxCrossAxisExtent);
+}
+
+class ListViewBuilder extends AstWidget {
+  final FunctionDeclaration itemBuilder;
+  final AstNode itemCount;
+
+  const ListViewBuilder(super.name, this.itemBuilder, this.itemCount);
+}
+
+class GridViewBuilder extends AstWidget {
+  final FunctionDeclaration itemBuilder;
+  final AstNode itemCount;
+  final AstNode maxCrossAxisExtent;
+
+  const GridViewBuilder(
+    super.name,
+    this.itemBuilder,
+    this.itemCount,
+    this.maxCrossAxisExtent,
+  );
 }
