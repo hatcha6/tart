@@ -60,11 +60,24 @@ class Tart {
   final Evaluator evaluator;
   final Parser parser;
   final Lexer lexer;
+  final String Function(String filePath)? _importHandler;
 
-  Tart()
-      : evaluator = Evaluator(),
+  Tart({String Function(String filePath)? importHandler})
+      : _importHandler = importHandler,
+        evaluator = Evaluator(),
         parser = Parser(),
-        lexer = Lexer();
+        lexer = Lexer() {
+    evaluator.setImportHandler(_handleImport);
+  }
+
+  List<AstNode> _handleImport(String filePath) {
+    if (_importHandler == null) {
+      throw Exception('importHandler is required fro imports');
+    }
+    final contents = _importHandler(filePath);
+    final tokens = lexer.scanTokens(contents);
+    return parser.parse(tokens);
+  }
 
   dynamic run(String source) {
     List<Token> tokens = _lexer.scanTokens(source);

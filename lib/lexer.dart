@@ -47,6 +47,7 @@ class Lexer {
     'false': TokenType.boolean,
     'null': TokenType.tartNull,
     'toString': TokenType.tartToString,
+    'import': TokenType.tartImport,
   };
 
   static final Map<String, Token> _tokenCache = HashMap();

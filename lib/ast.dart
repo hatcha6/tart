@@ -10,6 +10,13 @@ sealed class AstNode {
   const AstNode();
 }
 
+class ImportStatement extends AstNode {
+  final Token keyword;
+  final String path;
+
+  const ImportStatement(this.keyword, this.path);
+}
+
 class EndOfFile extends AstNode {
   const EndOfFile();
 }

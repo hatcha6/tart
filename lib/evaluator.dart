@@ -57,10 +57,16 @@ class Evaluator {
   late Environment _environment;
   bool _isGlobalScope = true;
 
+  late final List<AstNode> Function(String filepath) _importHandler;
+
   Evaluator() {
     _environment = _globals;
     // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
+  }
+
+  void setImportHandler(List<AstNode> Function(String filepath) importHandler) {
+    _importHandler = importHandler;
   }
 
   dynamic evaluate(List<AstNode> nodes) {
@@ -96,6 +102,7 @@ class Evaluator {
       ListLiteral() => _evaluateListLiteral(node),
       BreakStatement() => throw BreakException(),
       ToString() => _evaluateToString(node),
+      ImportStatement() => _evaluateImportStatement(node),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -114,6 +121,11 @@ class Evaluator {
   dynamic _evaluateFunctionDeclaration(FunctionDeclaration node) {
     _environment.define(node.name.lexeme, node);
     return node;
+  }
+
+  dynamic _evaluateImportStatement(ImportStatement node) {
+    List<AstNode> importedAst = _importHandler(node.path);
+    return evaluate(importedAst);
   }
 
   dynamic _evaluateIfStatement(IfStatement node) {
@@ -437,10 +449,11 @@ class Evaluator {
 
   flt.Color _convertColor(Color color) {
     return flt.Color.fromARGB(
-        color.a != null ? evaluateNode(color.a!) : 255,
-        color.r != null ? evaluateNode(color.r!) : 0,
-        color.g != null ? evaluateNode(color.g!) : 0,
-        color.b != null ? evaluateNode(color.b!) : 0);
+      color.a != null ? evaluateNode(color.a!) : 255,
+      color.r != null ? evaluateNode(color.r!) : 0,
+      color.g != null ? evaluateNode(color.g!) : 0,
+      color.b != null ? evaluateNode(color.b!) : 0,
+    );
   }
 
   flt.FontWeight _convertFontWeight(FontWeight fontWeight) {

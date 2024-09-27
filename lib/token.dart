@@ -81,6 +81,7 @@ enum TokenType {
   flutterWidget,
   flutterParam,
   tartToString,
+  tartImport,
 }
 
 class Token {

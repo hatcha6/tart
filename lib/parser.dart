@@ -81,6 +81,9 @@ class Parser {
         case TokenType.tartWhile:
           advance();
           return whileStatement();
+        case TokenType.tartImport:
+          advance();
+          return importDeclaration();
         default:
           return statement();
       }
@@ -745,6 +748,14 @@ class Parser {
           advance();
       }
     }
+  }
+
+  AstNode importDeclaration() {
+    Token importToken = previous();
+    String path =
+        consume(TokenType.string, "Expect string after 'import'.").lexeme;
+    consume(TokenType.semicolon, "Expect ';' after import statement.");
+    return ImportStatement(importToken, path);
   }
 }
 

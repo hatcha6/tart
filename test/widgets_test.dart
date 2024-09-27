@@ -8,7 +8,9 @@ void main() {
   late Tart interpreter;
 
   setUp(() {
-    interpreter = Tart();
+    interpreter = Tart(
+      importHandler: (filePath) => 'final text = "This variable was imported";',
+    );
   });
 
   testWidgets('Tart can render Flutter widgets', (WidgetTester tester) async {
@@ -39,7 +41,7 @@ void main() {
               child: flutter::Container(
                 child: f:Text(
                   text: 'Hello from Tart!',
-                  color: parameter::Color(r: 255, g: 255, b: 255),
+                  color: p:Color(r: 255, g: 255, b: 255),
                   style: parameter::TextStyle(
                     fontWeight: p:FontWeightBold(),
                   ),
@@ -447,5 +449,24 @@ return flutter::GridViewBuilder(
     expect(find.text('Item 4'), findsOneWidget);
     expect(find.text('Item 5'), findsOneWidget);
     expect(find.text('Item 6'), findsOneWidget);
+  });
+
+  testWidgets('Tart can import and use variables from other files',
+      (WidgetTester tester) async {
+    const String tartScript = '''
+import 'imported.tart';
+return flutter::Text(text: text);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('This variable was imported'), findsOneWidget);
   });
 }
