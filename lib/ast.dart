@@ -4,6 +4,7 @@ import 'token.dart';
 import 'dart:math';
 
 part 'widget_ast.dart';
+part 'parameter_ast.dart';
 
 sealed class AstNode {
   const AstNode();

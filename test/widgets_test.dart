@@ -37,7 +37,13 @@ void main() {
             height: 100,
             child: flutter::Center(
               child: flutter::Container(
-                child: f:Text(text: 'Hello from Tart!'),
+                child: f:Text(
+                  text: 'Hello from Tart!',
+                  color: parameter::Color(r: 255, g: 255, b: 255),
+                  style: parameter::TextStyle(
+                    fontWeight: p:FontWeightBold(),
+                  ),
+                ),
               ),
             ),
           );''';
@@ -403,9 +409,9 @@ return flutter::ListViewBuilder(
     expect(find.text('Item 6'), findsOneWidget);
   });
 
-  testWidgets('Tart can render ListViewBuilder', (WidgetTester tester) async {
+  testWidgets('Tart can render GridViewBuilder', (WidgetTester tester) async {
     const String tartScript = '''
-var items = [
+final items = [
       'Item 0',
       'Item 1',
       'Item 2',

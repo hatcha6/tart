@@ -267,7 +267,8 @@ class Evaluator {
 
   flt.Widget _evaluateWidget(AstWidget node) {
     return switch (node) {
-      Text(text: final text) => flt.Text(evaluateNode(text)),
+      Text(text: final text, style: final style) => flt.Text(evaluateNode(text),
+          style: style != null ? _convertTextStyle(style) : null),
       Column(
         children: final children,
         mainAxisAlignment: final mainAxisAlignment,
@@ -422,6 +423,34 @@ class Evaluator {
     return _environment.getValue(name);
   }
 
+  flt.TextStyle _convertTextStyle(TextStyle style) {
+    return flt.TextStyle(
+      fontFamily:
+          style.fontFamily != null ? evaluateNode(style.fontFamily!) : null,
+      fontSize: style.fontSize != null ? evaluateNode(style.fontSize!) : null,
+      color: style.color != null ? _convertColor(style.color! as Color) : null,
+      fontWeight: style.fontWeight != null
+          ? _convertFontWeight(style.fontWeight! as FontWeight)
+          : null,
+    );
+  }
+
+  flt.Color _convertColor(Color color) {
+    return flt.Color.fromARGB(
+        color.a != null ? evaluateNode(color.a!) : 255,
+        color.r != null ? evaluateNode(color.r!) : 0,
+        color.g != null ? evaluateNode(color.g!) : 0,
+        color.b != null ? evaluateNode(color.b!) : 0);
+  }
+
+  flt.FontWeight _convertFontWeight(FontWeight fontWeight) {
+    return switch (fontWeight) {
+      FontWeightNormal() => flt.FontWeight.normal,
+      FontWeightBold() => flt.FontWeight.bold,
+      _ => flt.FontWeight.normal,
+    };
+  }
+
   flt.EdgeInsets _convertEdgeInsets(EdgeInsets padding) {
     return flt.EdgeInsets.fromLTRB(
       padding.left != null ? evaluateNode(padding.left!) : 0,
@@ -498,7 +527,7 @@ class Evaluator {
       }
     }
 
-    // For custom objects or classes, you might need to implement a more sophisticated
+    // For custom objects or classes, we might need to implement a more sophisticated
     // method to access properties or methods. This is a basic implementation.
     if (object != null) {
       try {

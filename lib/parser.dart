@@ -134,11 +134,20 @@ class Parser {
 
     switch (name.lexeme) {
       case 'Text':
-        return Text(name, parameters['text']!);
+        return Text(
+            name, parameters['text']!, parameters['style'] as TextStyle?);
       case 'Column':
-        return Column(name, parameters['children']!);
+        return Column(
+            name,
+            parameters['children']!,
+            parameters['mainAxisAlignment'] as MainAxisAlignment?,
+            parameters['crossAxisAlignment'] as CrossAxisAlignment?);
       case 'Row':
-        return Row(name, parameters['children']!);
+        return Row(
+            name,
+            parameters['children']!,
+            parameters['mainAxisAlignment'] as MainAxisAlignment?,
+            parameters['crossAxisAlignment'] as CrossAxisAlignment?);
       case 'Container':
         return Container(name, parameters['child'] as AstWidget);
       case 'Image':
@@ -204,15 +213,59 @@ class Parser {
     Token name = consume(TokenType.identifier,
         "Expect Flutter parameter type after 'parameter::'.");
 
-    if (name.lexeme.contains('EdgeInsets')) {
-      return parseEdgeInsets(name);
-    } else if (name.lexeme.contains('MainAxisAlignment')) {
-      return parseMainAxisAlignment(name);
-    } else if (name.lexeme.contains('CrossAxisAlignment')) {
-      return parseCrossAxisAlignment(name);
-    } else {
-      throw error(name, "Unknown Flutter parameter type: ${name.lexeme}");
+    final parameterParsers = {
+      'EdgeInsets': parseEdgeInsets,
+      'MainAxisAlignment': parseMainAxisAlignment,
+      'CrossAxisAlignment': parseCrossAxisAlignment,
+      'TextStyle': parseTextStyle,
+      'Color': parseColor,
+      'FontWeight': parseFontWeight,
+    };
+
+    for (final entry in parameterParsers.entries) {
+      if (name.lexeme.contains(entry.key)) {
+        return entry.value(name);
+      }
     }
+
+    throw error(name, "Unknown Flutter parameter type: ${name.lexeme}");
+  }
+
+  FontWeight parseFontWeight(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after FontWeight method.");
+    FontWeight result;
+    switch (name.lexeme) {
+      case 'FontWeightNormal':
+        result = const FontWeightNormal();
+        break;
+      case 'FontWeightBold':
+        result = const FontWeightBold();
+        break;
+      default:
+        throw error(name, "Unknown FontWeight method: ${name.lexeme}");
+    }
+    consume(TokenType.rightParen, "Expect ')' after FontWeight parameters.");
+    return result;
+  }
+
+  Color parseColor(Token name) {
+    final parameters = _parseParameterNodes();
+    return Color(
+      r: parameters['r'],
+      g: parameters['g'],
+      b: parameters['b'],
+      a: parameters['a'],
+    );
+  }
+
+  TextStyle parseTextStyle(Token name) {
+    final parameters = _parseParameterNodes();
+    return TextStyle(
+      fontFamily: parameters['fontFamily'],
+      fontSize: parameters['fontSize'],
+      color: parameters['color'],
+      fontWeight: parameters['fontWeight'],
+    );
   }
 
   EdgeInsets parseEdgeInsets(Token name) {
