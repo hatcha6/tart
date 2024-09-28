@@ -135,71 +135,81 @@ class Parser {
         consume(TokenType.identifier, "Expect widget name after 'flutter::'.");
     final parameters = _parseParameterNodes();
 
-    switch (name.lexeme) {
-      case 'Text':
-        return Text(
-            name, parameters['text']!, parameters['style'] as TextStyle?);
-      case 'Column':
-        return Column(
+    final widgetFactories = {
+      'Text': (name, params) =>
+          Text(name, params['text']!, params['style'] as TextStyle?),
+      'Column': (name, params) => Column(
             name,
-            parameters['children']!,
-            parameters['mainAxisAlignment'] as MainAxisAlignment?,
-            parameters['crossAxisAlignment'] as CrossAxisAlignment?);
-      case 'Row':
-        return Row(
+            params['children']!,
+            params['mainAxisAlignment'] as MainAxisAlignment?,
+            params['crossAxisAlignment'] as CrossAxisAlignment?,
+          ),
+      'Row': (name, params) => Row(
             name,
-            parameters['children']!,
-            parameters['mainAxisAlignment'] as MainAxisAlignment?,
-            parameters['crossAxisAlignment'] as CrossAxisAlignment?);
-      case 'Container':
-        return Container(name, parameters['child'] as AstWidget);
-      case 'Image':
-        return Image(name, parameters['url']!);
-      case 'Padding':
-        return Padding(name, parameters['padding'] as EdgeInsets,
-            parameters['child'] as AstWidget);
-      case 'Center':
-        return Center(name, parameters['child'] as AstWidget);
-      case 'SizedBox':
-        return SizedBox(name,
-            width: parameters['width'],
-            height: parameters['height'],
-            child: parameters['child'] as AstWidget?);
-      case 'Expanded':
-        return Expanded(
-          name,
-          parameters['child'] as AstWidget,
-          parameters['flex'],
-        );
-      case 'ElevatedButton':
-        return ElevatedButton(name, parameters['child'] as AstWidget,
-            parameters['onPressed'] as FunctionDeclaration);
-      case 'Card':
-        return Card(
-            name, parameters['child'] as AstWidget, parameters['elevation']);
-      case 'ListView':
-        return ListView(name, parameters['children'] as AstNode);
-      case 'GridView':
-        final optionalParam = parameters['maxCrossAxisExtent'];
+            params['children']!,
+            params['mainAxisAlignment'] as MainAxisAlignment?,
+            params['crossAxisAlignment'] as CrossAxisAlignment?,
+          ),
+      'Container': (name, params) =>
+          Container(name, params['child'] as AstWidget),
+      'Image': (name, params) => Image(name, params['url']!),
+      'Padding': (name, params) => Padding(
+            name,
+            params['padding'] as EdgeInsets,
+            params['child'] as AstWidget,
+          ),
+      'Center': (name, params) => Center(name, params['child'] as AstWidget),
+      'SizedBox': (name, params) => SizedBox(
+            name,
+            width: params['width'],
+            height: params['height'],
+            child: params['child'] as AstWidget?,
+          ),
+      'Expanded': (name, params) => Expanded(
+            name,
+            params['child'] as AstWidget,
+            params['flex'],
+          ),
+      'ElevatedButton': (name, params) => ElevatedButton(
+            name,
+            params['child'] as AstWidget,
+            params['onPressed'] as FunctionDeclaration,
+          ),
+      'Card': (name, params) =>
+          Card(name, params['child'] as AstWidget, params['elevation']),
+      'ListView': (name, params) =>
+          ListView(name, params['children'] as AstNode),
+      'GridView': (name, params) {
+        final optionalParam = params['maxCrossAxisExtent'];
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
         return GridView(
-            name, parameters['children'] as AstNode, mainCrossAxisExtent);
-      case 'ListViewBuilder':
-        return ListViewBuilder(
+          name,
+          params['children'] as AstNode,
+          mainCrossAxisExtent,
+        );
+      },
+      'ListViewBuilder': (name, params) => ListViewBuilder(
             name,
-            parameters['itemBuilder'] as FunctionDeclaration,
-            parameters['itemCount'] as AstNode);
-      case 'GridViewBuilder':
-        final optionalParam = parameters['maxCrossAxisExtent'];
+            params['itemBuilder'] as FunctionDeclaration,
+            params['itemCount'] as AstNode,
+          ),
+      'GridViewBuilder': (name, params) {
+        final optionalParam = params['maxCrossAxisExtent'];
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
         return GridViewBuilder(
-            name,
-            parameters['itemBuilder'] as FunctionDeclaration,
-            parameters['itemCount'] as AstNode,
-            mainCrossAxisExtent);
-      default:
-        throw error(name, "Unknown Flutter widget: ${name.lexeme}");
+          name,
+          params['itemBuilder'] as FunctionDeclaration,
+          params['itemCount'] as AstNode,
+          mainCrossAxisExtent,
+        );
+      },
+    };
+
+    final widgetFactory = widgetFactories[name.lexeme];
+    if (widgetFactory != null) {
+      return widgetFactory(name, parameters);
     }
+    throw error(name, "Unknown Flutter widget: ${name.lexeme}");
   }
 
   AstNode parameterValue() {
@@ -236,16 +246,13 @@ class Parser {
 
   FontWeight parseFontWeight(Token name) {
     consume(TokenType.leftParen, "Expect '(' after FontWeight method.");
-    FontWeight result;
-    switch (name.lexeme) {
-      case 'FontWeightNormal':
-        result = const FontWeightNormal();
-        break;
-      case 'FontWeightBold':
-        result = const FontWeightBold();
-        break;
-      default:
-        throw error(name, "Unknown FontWeight method: ${name.lexeme}");
+    const fontWeightMap = {
+      'FontWeightNormal': FontWeightNormal(),
+      'FontWeightBold': FontWeightBold(),
+    };
+    final result = fontWeightMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown FontWeight method: ${name.lexeme}");
     }
     consume(TokenType.rightParen, "Expect ')' after FontWeight parameters.");
     return result;
@@ -274,50 +281,41 @@ class Parser {
   EdgeInsets parseEdgeInsets(Token name) {
     final parameters = _parseParameterNodes();
 
-    EdgeInsets result;
-    switch (name.lexeme) {
-      case 'EdgeInsetsAll':
-        result = EdgeInsetsAll(parameters['value']!);
-        break;
-      case 'EdgeInsetsSymmetric':
-        result = EdgeInsetsSymmetric(
-            parameters['horizontal'], parameters['vertical']);
-        break;
-      case 'EdgeInsetsOnly':
-        result = EdgeInsetsOnly(parameters['top'], parameters['right'],
-            parameters['bottom'], parameters['left']);
-        break;
-      default:
-        throw error(name, "Unknown EdgeInsets method: ${name.lexeme}");
-    }
+    final edgeInsetsFactories = {
+      'EdgeInsetsAll': () => EdgeInsetsAll(parameters['value']!),
+      'EdgeInsetsSymmetric': () => EdgeInsetsSymmetric(
+            parameters['horizontal'],
+            parameters['vertical'],
+          ),
+      'EdgeInsetsOnly': () => EdgeInsetsOnly(
+            parameters['top'],
+            parameters['right'],
+            parameters['bottom'],
+            parameters['left'],
+          ),
+    };
 
-    return result;
+    final factory = edgeInsetsFactories[name.lexeme];
+    if (factory != null) {
+      return factory();
+    } else {
+      throw error(name, "Unknown EdgeInsets method: ${name.lexeme}");
+    }
   }
 
   MainAxisAlignment parseMainAxisAlignment(Token name) {
     consume(TokenType.leftParen, "Expect '(' after EdgeInsets method.");
-    MainAxisAlignment result;
-    switch (name.lexeme) {
-      case 'MainAxisAlignmentStart':
-        result = const MainAxisAlignmentStart();
-        break;
-      case 'MainAxisAlignmentCenter':
-        result = const MainAxisAlignmentCenter();
-        break;
-      case 'MainAxisAlignmentEnd':
-        result = const MainAxisAlignmentEnd();
-        break;
-      case 'MainAxisAlignmentSpaceBetween':
-        result = const MainAxisAlignmentSpaceBetween();
-        break;
-      case 'MainAxisAlignmentSpaceAround':
-        result = const MainAxisAlignmentSpaceAround();
-        break;
-      case 'MainAxisAlignmentSpaceEvenly':
-        result = const MainAxisAlignmentSpaceEvenly();
-        break;
-      default:
-        throw error(name, "Unknown MainAxisAligment method: ${name.lexeme}");
+    const mainAxisAlignmentMap = {
+      'MainAxisAlignmentStart': MainAxisAlignmentStart(),
+      'MainAxisAlignmentCenter': MainAxisAlignmentCenter(),
+      'MainAxisAlignmentEnd': MainAxisAlignmentEnd(),
+      'MainAxisAlignmentSpaceBetween': MainAxisAlignmentSpaceBetween(),
+      'MainAxisAlignmentSpaceAround': MainAxisAlignmentSpaceAround(),
+      'MainAxisAlignmentSpaceEvenly': MainAxisAlignmentSpaceEvenly(),
+    };
+    final result = mainAxisAlignmentMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown MainAxisAlignment method: ${name.lexeme}");
     }
 
     consume(TokenType.rightParen, "Expect ')' after EdgeInsets method.");
@@ -326,25 +324,16 @@ class Parser {
 
   CrossAxisAlignment parseCrossAxisAlignment(Token name) {
     consume(TokenType.leftParen, "Expect '(' after EdgeInsets method.");
-    CrossAxisAlignment result;
-    switch (name.lexeme) {
-      case 'CrossAxisAlignmentStart':
-        result = const CrossAxisAlignmentStart();
-        break;
-      case 'CrossAxisAlignmentCenter':
-        result = const CrossAxisAlignmentCenter();
-        break;
-      case 'CrossAxisAlignmentEnd':
-        result = const CrossAxisAlignmentEnd();
-        break;
-      case 'CrossAxisAlignmentStretch':
-        result = const CrossAxisAlignmentStretch();
-        break;
-      case 'CrossAxisAlignmentBaseline':
-        result = const CrossAxisAlignmentBaseline();
-        break;
-      default:
-        throw error(name, "Unknown CrossAxisAligment method: ${name.lexeme}");
+    const crossAxisAlignmentMap = {
+      'CrossAxisAlignmentStart': CrossAxisAlignmentStart(),
+      'CrossAxisAlignmentCenter': CrossAxisAlignmentCenter(),
+      'CrossAxisAlignmentEnd': CrossAxisAlignmentEnd(),
+      'CrossAxisAlignmentStretch': CrossAxisAlignmentStretch(),
+      'CrossAxisAlignmentBaseline': CrossAxisAlignmentBaseline(),
+    };
+    final result = crossAxisAlignmentMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown CrossAxisAlignment method: ${name.lexeme}");
     }
 
     consume(TokenType.rightParen, "Expect ')' after EdgeInsets parameters.");
@@ -352,13 +341,14 @@ class Parser {
   }
 
   AstNode varDeclaration() {
+    Token keyword = previous();
     Token name = consume(TokenType.identifier, "Expect variable name.");
     AstNode? initializer;
     if (match([TokenType.assign])) {
       initializer = expression();
     }
     consume(TokenType.semicolon, "Expect ';' after variable declaration.");
-    return VariableDeclaration(name, initializer);
+    return VariableDeclaration(keyword, name, initializer);
   }
 
   AstNode functionDeclaration() {
@@ -735,19 +725,11 @@ class Parser {
     }
   }
 
-  void synchronizeToNextDeclaration() {
-    while (!isAtEnd()) {
-      switch (peek().type) {
-        case TokenType.flutterWidget:
-        case TokenType.tartVar:
-        case TokenType.tartConst:
-        case TokenType.tartFinal:
-        case TokenType.tartFunction:
-          return;
-        default:
-          advance();
-      }
+  AstNode synchronizeToNextDeclaration() {
+    if (!isAtEnd()) {
+      return declaration();
     }
+    throw error(peek(), "End of file");
   }
 
   AstNode importDeclaration() {

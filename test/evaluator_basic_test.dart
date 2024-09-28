@@ -21,6 +21,7 @@ void main() {
 
   test('Evaluates variable declarations and assignments', () {
     var varDecl = const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1),
       Token(TokenType.identifier, "x", null, 1),
       Literal(10),
     );
@@ -98,6 +99,7 @@ void main() {
 
   test('Evaluates while statements', () {
     evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1),
       Token(TokenType.identifier, "x", null, 1),
       Literal(0),
     ));

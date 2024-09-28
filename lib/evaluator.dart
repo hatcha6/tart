@@ -14,11 +14,15 @@ class EvaluationError implements Exception {
 class Environment {
   final Environment? enclosing;
   final Map<String, dynamic> values = {};
+  final Set<String> immutableVariables = {};
 
   Environment([this.enclosing]);
 
-  void define(String name, dynamic value) {
+  void define(String name, dynamic value, String keyword) {
     values[name] = value;
+    if (keyword == 'final' || keyword == 'const') {
+      immutableVariables.add(name);
+    }
   }
 
   dynamic get(Token name) {
@@ -38,6 +42,10 @@ class Environment {
   }
 
   void assign(Token name, dynamic value) {
+    if (immutableVariables.contains(name.lexeme)) {
+      throw EvaluationError(
+          "Cannot reassign to final or const variable '${name.lexeme}'.");
+    }
     if (values.containsKey(name.lexeme)) {
       values[name.lexeme] = value;
       return;
@@ -111,15 +119,15 @@ class Evaluator {
     dynamic value =
         node.initializer != null ? evaluateNode(node.initializer!) : null;
     if (_isGlobalScope) {
-      _globals.define(node.name.lexeme, value);
+      _globals.define(node.name.lexeme, value, node.keyword.lexeme);
     } else {
-      _environment.define(node.name.lexeme, value);
+      _environment.define(node.name.lexeme, value, node.keyword.lexeme);
     }
     return value;
   }
 
   dynamic _evaluateFunctionDeclaration(FunctionDeclaration node) {
-    _environment.define(node.name.lexeme, node);
+    _environment.define(node.name.lexeme, node, 'final');
     return node;
   }
 
@@ -351,7 +359,7 @@ class Evaluator {
         flt.ListView.builder(
           itemBuilder: (context, index) {
             final previousEnvironment = _environment;
-            _environment.define('index', index);
+            _environment.define('index', index, 'final');
             final result = callFunctionDeclaration(itemBuilder, [index]);
             _environment = previousEnvironment;
             return result;
@@ -366,7 +374,7 @@ class Evaluator {
         flt.GridView.builder(
           itemBuilder: (context, index) {
             final previousEnvironment = _environment;
-            _environment.define('index', index);
+            _environment.define('index', index, 'final');
             final result = callFunctionDeclaration(itemBuilder, [index]);
             _environment = previousEnvironment;
             return result;
@@ -392,7 +400,8 @@ class Evaluator {
 
     try {
       for (int i = 0; i < declaration.parameters.length; i++) {
-        _environment.define(declaration.parameters[i].lexeme, arguments[i]);
+        _environment.define(
+            declaration.parameters[i].lexeme, arguments[i], 'var');
       }
 
       return evaluateNode(declaration.body);
@@ -420,11 +429,11 @@ class Evaluator {
   }
 
   void defineGlobalFunction(String name, Function function) {
-    _globals.define(name, function);
+    _globals.define(name, function, 'final');
   }
 
   void defineGlobalVariable(String name, dynamic value) {
-    _globals.define(name, value);
+    _globals.define(name, value, 'var');
   }
 
   dynamic getGlobalVariable(String name) {

@@ -22,10 +22,11 @@ class EndOfFile extends AstNode {
 }
 
 class VariableDeclaration extends AstNode {
+  final Token keyword;
   final Token name;
   final AstNode? initializer;
 
-  const VariableDeclaration(this.name, this.initializer);
+  const VariableDeclaration(this.keyword, this.name, this.initializer);
 }
 
 class FunctionDeclaration extends AstNode {

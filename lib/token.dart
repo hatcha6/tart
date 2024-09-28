@@ -24,9 +24,9 @@ enum TokenType {
   tartLate,
   required,
   static,
-  async,
-  await,
-  yield,
+  tartAsync,
+  tartAwait,
+  tartYield,
 
   // Literals
   integer,
