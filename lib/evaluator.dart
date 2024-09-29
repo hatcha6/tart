@@ -384,6 +384,87 @@ class Evaluator {
             maxCrossAxisExtent: evaluateNode(maxCrossAxisExtent),
           ),
         ),
+      TextField(
+        decoration: final decoration,
+        onSubmitted: final onSubmitted,
+        onChanged: final onChanged
+      ) =>
+        flt.TextField(
+          decoration: decoration != null
+              ? _convertInputDecoration(decoration as InputDecoration)
+              : null,
+          onSubmitted: onSubmitted != null
+              ? (value) => callFunctionDeclaration(onSubmitted, [value])
+              : null,
+          onChanged: onChanged != null
+              ? (value) => callFunctionDeclaration(onChanged, [value])
+              : null,
+        ),
+      ListTile(
+        leading: final leading,
+        title: final title,
+        subtitle: final subtitle,
+        trailing: final trailing,
+        onTap: final onTap
+      ) =>
+        flt.ListTile(
+          leading:
+              leading != null ? _evaluateWidget(leading as AstWidget) : null,
+          title: title != null ? _evaluateWidget(title as AstWidget) : null,
+          subtitle:
+              subtitle != null ? _evaluateWidget(subtitle as AstWidget) : null,
+          trailing:
+              trailing != null ? _evaluateWidget(trailing as AstWidget) : null,
+          onTap:
+              onTap != null ? () => callFunctionDeclaration(onTap, []) : null,
+        ),
+      Stack(children: final children, alignment: final alignment) => flt.Stack(
+          alignment: (alignment != null
+                  ? _convertAlignment(alignment as AstWidget)
+                  : null) ??
+              flt.Alignment.topLeft,
+          children: _evaluateListOfWidgets(children),
+        ),
+      TextButton(child: final child, onPressed: final onPressed) =>
+        flt.TextButton(
+          onPressed: () => callFunctionDeclaration(
+            onPressed,
+            onPressed.parameters,
+          ),
+          child: _evaluateWidget(child),
+        ),
+      OutlinedButton(child: final child, onPressed: final onPressed) =>
+        flt.OutlinedButton(
+          onPressed: () => callFunctionDeclaration(
+            onPressed,
+            onPressed.parameters,
+          ),
+          child: _evaluateWidget(child),
+        ),
+      LinearProgressIndicator(
+        value: final value,
+        backgroundColor: final backgroundColor,
+        color: final color
+      ) =>
+        flt.LinearProgressIndicator(
+          value: value != null ? evaluateNode(value) : null,
+          backgroundColor: backgroundColor != null
+              ? _convertColor(backgroundColor as Color)
+              : null,
+          color: color != null ? _convertColor(color as Color) : null,
+        ),
+      CircularProgressIndicator(
+        value: final value,
+        backgroundColor: final backgroundColor,
+        color: final color
+      ) =>
+        flt.CircularProgressIndicator(
+          value: value != null ? evaluateNode(value) : null,
+          backgroundColor: backgroundColor != null
+              ? _convertColor(backgroundColor as Color)
+              : null,
+          color: color != null ? _convertColor(color as Color) : null,
+        ),
     };
   }
 
@@ -452,6 +533,156 @@ class Evaluator {
       color: style.color != null ? _convertColor(style.color! as Color) : null,
       fontWeight: style.fontWeight != null
           ? _convertFontWeight(style.fontWeight! as FontWeight)
+          : null,
+    );
+  }
+
+  flt.AlignmentGeometry _convertAlignment(AstWidget node) {
+    return switch (node) {
+      AlignmentTopLeft() => flt.Alignment.topLeft,
+      AlignmentTopCenter() => flt.Alignment.topCenter,
+      AlignmentTopRight() => flt.Alignment.topRight,
+      AlignmentCenterLeft() => flt.Alignment.centerLeft,
+      AlignmentCenterRight() => flt.Alignment.centerRight,
+      AlignmentBottomLeft() => flt.Alignment.bottomLeft,
+      AlignmentBottomCenter() => flt.Alignment.bottomCenter,
+      AlignmentBottomRight() => flt.Alignment.bottomRight,
+      _ => flt.Alignment.topLeft,
+    };
+  }
+
+  flt.InputDecoration _convertInputDecoration(InputDecoration decoration) {
+    return flt.InputDecoration(
+      icon: decoration.icon != null
+          ? _evaluateWidget(decoration.icon! as AstWidget)
+          : null,
+      iconColor: decoration.iconColor != null
+          ? _convertColor(decoration.iconColor! as Color)
+          : null,
+      label: decoration.label != null
+          ? _evaluateWidget(decoration.label! as AstWidget)
+          : null,
+      labelText: decoration.labelText != null
+          ? evaluateNode(decoration.labelText!)
+          : null,
+      labelStyle: decoration.labelStyle != null
+          ? _convertTextStyle(decoration.labelStyle! as TextStyle)
+          : null,
+      floatingLabelStyle: decoration.floatingLabelStyle != null
+          ? _convertTextStyle(decoration.floatingLabelStyle! as TextStyle)
+          : null,
+      helperText: decoration.helperText != null
+          ? evaluateNode(decoration.helperText!)
+          : null,
+      helperStyle: decoration.helperStyle != null
+          ? _convertTextStyle(decoration.helperStyle! as TextStyle)
+          : null,
+      helperMaxLines: decoration.helperMaxLines != null
+          ? evaluateNode(decoration.helperMaxLines!)
+          : null,
+      hintText: decoration.hintText != null
+          ? evaluateNode(decoration.hintText!)
+          : null,
+      hintStyle: decoration.hintStyle != null
+          ? _convertTextStyle(decoration.hintStyle! as TextStyle)
+          : null,
+      hintTextDirection: decoration.hintTextDirection != null
+          ? evaluateNode(decoration.hintTextDirection!)
+          : null,
+      hintMaxLines: decoration.hintMaxLines != null
+          ? evaluateNode(decoration.hintMaxLines!)
+          : null,
+      errorText: decoration.errorText != null
+          ? evaluateNode(decoration.errorText!)
+          : null,
+      errorStyle: decoration.errorStyle != null
+          ? _convertTextStyle(decoration.errorStyle! as TextStyle)
+          : null,
+      errorMaxLines: decoration.errorMaxLines != null
+          ? evaluateNode(decoration.errorMaxLines!)
+          : null,
+      floatingLabelBehavior: decoration.floatingLabelBehavior != null
+          ? evaluateNode(decoration.floatingLabelBehavior!)
+          : null,
+      isCollapsed: decoration.isCollapsed != null
+          ? evaluateNode(decoration.isCollapsed!)
+          : null,
+      isDense:
+          decoration.isDense != null ? evaluateNode(decoration.isDense!) : null,
+      contentPadding: decoration.contentPadding != null
+          ? _convertEdgeInsets(decoration.contentPadding! as EdgeInsets)
+          : null,
+      prefixIcon: decoration.prefixIcon != null
+          ? _evaluateWidget(decoration.prefixIcon! as AstWidget)
+          : null,
+      prefixIconColor: decoration.prefixIconColor != null
+          ? _convertColor(decoration.prefixIconColor! as Color)
+          : null,
+      prefix: decoration.prefix != null
+          ? _evaluateWidget(decoration.prefix! as AstWidget)
+          : null,
+      prefixText: decoration.prefixText != null
+          ? evaluateNode(decoration.prefixText!)
+          : null,
+      prefixStyle: decoration.prefixStyle != null
+          ? _convertTextStyle(decoration.prefixStyle! as TextStyle)
+          : null,
+      suffixIcon: decoration.suffixIcon != null
+          ? _evaluateWidget(decoration.suffixIcon! as AstWidget)
+          : null,
+      suffixIconColor: decoration.suffixIconColor != null
+          ? _convertColor(decoration.suffixIconColor! as Color)
+          : null,
+      suffix: decoration.suffix != null
+          ? _evaluateWidget(decoration.suffix! as AstWidget)
+          : null,
+      suffixText: decoration.suffixText != null
+          ? evaluateNode(decoration.suffixText!)
+          : null,
+      suffixStyle: decoration.suffixStyle != null
+          ? _convertTextStyle(decoration.suffixStyle! as TextStyle)
+          : null,
+      counterText: decoration.counterText != null
+          ? evaluateNode(decoration.counterText!)
+          : null,
+      counterStyle: decoration.counterStyle != null
+          ? _convertTextStyle(decoration.counterStyle! as TextStyle)
+          : null,
+      filled:
+          decoration.filled != null ? evaluateNode(decoration.filled!) : null,
+      fillColor: decoration.fillColor != null
+          ? _convertColor(decoration.fillColor! as Color)
+          : null,
+      focusColor: decoration.focusColor != null
+          ? _convertColor(decoration.focusColor! as Color)
+          : null,
+      hoverColor: decoration.hoverColor != null
+          ? _convertColor(decoration.hoverColor! as Color)
+          : null,
+      errorBorder: decoration.errorBorder != null
+          ? evaluateNode(decoration.errorBorder!)
+          : null,
+      focusedBorder: decoration.focusedBorder != null
+          ? evaluateNode(decoration.focusedBorder!)
+          : null,
+      focusedErrorBorder: decoration.focusedErrorBorder != null
+          ? evaluateNode(decoration.focusedErrorBorder!)
+          : null,
+      disabledBorder: decoration.disabledBorder != null
+          ? evaluateNode(decoration.disabledBorder!)
+          : null,
+      enabledBorder: decoration.enabledBorder != null
+          ? evaluateNode(decoration.enabledBorder!)
+          : null,
+      border:
+          decoration.border != null ? evaluateNode(decoration.border!) : null,
+      enabled:
+          decoration.enabled != null ? evaluateNode(decoration.enabled!) : true,
+      semanticCounterText: decoration.semanticCounterText != null
+          ? evaluateNode(decoration.semanticCounterText!)
+          : null,
+      alignLabelWithHint: decoration.alignLabelWithHint != null
+          ? evaluateNode(decoration.alignLabelWithHint!)
           : null,
     );
   }

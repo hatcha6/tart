@@ -136,49 +136,37 @@ class Parser {
     final parameters = _parseParameterNodes();
 
     final widgetFactories = {
-      'Text': (name, params) =>
-          Text(name, params['text']!, params['style'] as TextStyle?),
+      'Text': (name, params) => Text(name, params['text']!, params['style']),
       'Column': (name, params) => Column(
             name,
             params['children']!,
-            params['mainAxisAlignment'] as MainAxisAlignment?,
-            params['crossAxisAlignment'] as CrossAxisAlignment?,
+            params['mainAxisAlignment'],
+            params['crossAxisAlignment'],
           ),
       'Row': (name, params) => Row(
             name,
             params['children']!,
-            params['mainAxisAlignment'] as MainAxisAlignment?,
-            params['crossAxisAlignment'] as CrossAxisAlignment?,
+            params['mainAxisAlignment'],
+            params['crossAxisAlignment'],
           ),
-      'Container': (name, params) =>
-          Container(name, params['child'] as AstWidget),
+      'Container': (name, params) => Container(name, params['child']),
       'Image': (name, params) => Image(name, params['url']!),
-      'Padding': (name, params) => Padding(
-            name,
-            params['padding'] as EdgeInsets,
-            params['child'] as AstWidget,
-          ),
-      'Center': (name, params) => Center(name, params['child'] as AstWidget),
+      'Padding': (name, params) =>
+          Padding(name, params['padding'], params['child']),
+      'Center': (name, params) => Center(name, params['child']),
       'SizedBox': (name, params) => SizedBox(
             name,
             width: params['width'],
             height: params['height'],
-            child: params['child'] as AstWidget?,
+            child: params['child'],
           ),
-      'Expanded': (name, params) => Expanded(
-            name,
-            params['child'] as AstWidget,
-            params['flex'],
-          ),
-      'ElevatedButton': (name, params) => ElevatedButton(
-            name,
-            params['child'] as AstWidget,
-            params['onPressed'] as FunctionDeclaration,
-          ),
+      'Expanded': (name, params) =>
+          Expanded(name, params['child'], params['flex']),
+      'ElevatedButton': (name, params) =>
+          ElevatedButton(name, params['child'], params['onPressed']),
       'Card': (name, params) =>
-          Card(name, params['child'] as AstWidget, params['elevation']),
-      'ListView': (name, params) =>
-          ListView(name, params['children'] as AstNode),
+          Card(name, params['child'], params['elevation']),
+      'ListView': (name, params) => ListView(name, params['children']),
       'GridView': (name, params) {
         final optionalParam = params['maxCrossAxisExtent'];
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
@@ -190,19 +178,51 @@ class Parser {
       },
       'ListViewBuilder': (name, params) => ListViewBuilder(
             name,
-            params['itemBuilder'] as FunctionDeclaration,
-            params['itemCount'] as AstNode,
+            params['itemBuilder'],
+            params['itemCount'],
           ),
       'GridViewBuilder': (name, params) {
         final optionalParam = params['maxCrossAxisExtent'];
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
         return GridViewBuilder(
           name,
-          params['itemBuilder'] as FunctionDeclaration,
-          params['itemCount'] as AstNode,
+          params['itemBuilder'],
+          params['itemCount'],
           mainCrossAxisExtent,
         );
       },
+      'TextField': (name, params) => TextField(
+            name,
+            params['decoration'],
+            params['onSubmitted'],
+            params['onChanged'],
+          ),
+      'ListTile': (name, params) => ListTile(
+            name,
+            params['leading'],
+            params['title'],
+            params['subtitle'],
+            params['trailing'],
+            params['onTap'],
+          ),
+      'OutlinedButton': (name, params) =>
+          OutlinedButton(name, params['child'], params['onPressed']),
+      'TextButton': (name, params) =>
+          TextButton(name, params['child'], params['onPressed']),
+      'Stack': (name, params) =>
+          Stack(name, params['children']!, params['alignment']),
+      'LinearProgressIndicator': (name, params) => LinearProgressIndicator(
+            name,
+            params['value'],
+            params['backgroundColor'],
+            params['color'],
+          ),
+      'CircularProgressIndicator': (name, params) => CircularProgressIndicator(
+            name,
+            params['value'],
+            params['backgroundColor'],
+            params['color'],
+          ),
     };
 
     final widgetFactory = widgetFactories[name.lexeme];
@@ -233,6 +253,8 @@ class Parser {
       'TextStyle': parseTextStyle,
       'Color': parseColor,
       'FontWeight': parseFontWeight,
+      'InputDecoration': parseInputDecoration,
+      'Alignment': parseAlignment,
     };
 
     for (final entry in parameterParsers.entries) {
@@ -242,6 +264,78 @@ class Parser {
     }
 
     throw error(name, "Unknown Flutter parameter type: ${name.lexeme}");
+  }
+
+  Alignment parseAlignment(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after Alignment method.");
+    const alignmentMap = {
+      'AlignmentTopLeft': AlignmentTopLeft(),
+      'AlignmentTopCenter': AlignmentTopCenter(),
+      'AlignmentTopRight': AlignmentTopRight(),
+      'AlignmentCenterLeft': AlignmentCenterLeft(),
+      'AlignmentCenterRight': AlignmentCenterRight(),
+      'AlignmentBottomLeft': AlignmentBottomLeft(),
+      'AlignmentBottomCenter': AlignmentBottomCenter(),
+      'AlignmentBottomRight': AlignmentBottomRight(),
+      'AlignmentCenter': AlignmentCenter(),
+    };
+    final result = alignmentMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown Alignment method: ${name.lexeme}");
+    }
+    consume(TokenType.rightParen, "Expect ')' after Alignment parameters.");
+    return result;
+  }
+
+  InputDecoration parseInputDecoration(Token name) {
+    final parameters = _parseParameterNodes();
+    return InputDecoration(
+      icon: parameters['icon'],
+      iconColor: parameters['iconColor'],
+      label: parameters['label'],
+      labelText: parameters['labelText'],
+      labelStyle: parameters['labelStyle'],
+      floatingLabelStyle: parameters['floatingLabelStyle'],
+      helperText: parameters['helperText'],
+      helperStyle: parameters['helperStyle'],
+      helperMaxLines: parameters['helperMaxLines'],
+      hintText: parameters['hintText'],
+      hintStyle: parameters['hintStyle'],
+      hintTextDirection: parameters['hintTextDirection'],
+      hintMaxLines: parameters['hintMaxLines'],
+      errorText: parameters['errorText'],
+      errorStyle: parameters['errorStyle'],
+      errorMaxLines: parameters['errorMaxLines'],
+      floatingLabelBehavior: parameters['floatingLabelBehavior'],
+      isCollapsed: parameters['isCollapsed'],
+      isDense: parameters['isDense'],
+      contentPadding: parameters['contentPadding'],
+      prefixIcon: parameters['prefixIcon'],
+      prefixIconColor: parameters['prefixIconColor'],
+      prefix: parameters['prefix'],
+      prefixText: parameters['prefixText'],
+      prefixStyle: parameters['prefixStyle'],
+      suffixIcon: parameters['suffixIcon'],
+      suffixIconColor: parameters['suffixIconColor'],
+      suffix: parameters['suffix'],
+      suffixText: parameters['suffixText'],
+      suffixStyle: parameters['suffixStyle'],
+      counterText: parameters['counterText'],
+      counterStyle: parameters['counterStyle'],
+      filled: parameters['filled'],
+      fillColor: parameters['fillColor'],
+      focusColor: parameters['focusColor'],
+      hoverColor: parameters['hoverColor'],
+      errorBorder: parameters['errorBorder'],
+      focusedBorder: parameters['focusedBorder'],
+      focusedErrorBorder: parameters['focusedErrorBorder'],
+      disabledBorder: parameters['disabledBorder'],
+      enabledBorder: parameters['enabledBorder'],
+      border: parameters['border'],
+      enabled: parameters['enabled'],
+      semanticCounterText: parameters['semanticCounterText'],
+      alignLabelWithHint: parameters['alignLabelWithHint'],
+    );
   }
 
   FontWeight parseFontWeight(Token name) {

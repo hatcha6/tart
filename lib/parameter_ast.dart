@@ -104,3 +104,139 @@ class TextStyle extends AstNode {
   const TextStyle(
       {this.fontFamily, this.fontSize, this.color, this.fontWeight});
 }
+
+class InputDecoration extends AstNode {
+  final AstNode? icon;
+  final AstNode? iconColor;
+  final AstNode? label;
+  final AstNode? labelText;
+  final AstNode? labelStyle;
+  final AstNode? floatingLabelStyle;
+  final AstNode? helperText;
+  final AstNode? helperStyle;
+  final AstNode? helperMaxLines;
+  final AstNode? hintText;
+  final AstNode? hintStyle;
+  final AstNode? hintTextDirection;
+  final AstNode? hintMaxLines;
+  final AstNode? errorText;
+  final AstNode? errorStyle;
+  final AstNode? errorMaxLines;
+  final AstNode? floatingLabelBehavior;
+  final AstNode? isCollapsed;
+  final AstNode? isDense;
+  final AstNode? contentPadding;
+  final AstNode? prefixIcon;
+  final AstNode? prefixIconColor;
+  final AstNode? prefix;
+  final AstNode? prefixText;
+  final AstNode? prefixStyle;
+  final AstNode? suffixIcon;
+  final AstNode? suffixIconColor;
+  final AstNode? suffix;
+  final AstNode? suffixText;
+  final AstNode? suffixStyle;
+  final AstNode? counterText;
+  final AstNode? counterStyle;
+  final AstNode? filled;
+  final AstNode? fillColor;
+  final AstNode? focusColor;
+  final AstNode? hoverColor;
+  final AstNode? errorBorder;
+  final AstNode? focusedBorder;
+  final AstNode? focusedErrorBorder;
+  final AstNode? disabledBorder;
+  final AstNode? enabledBorder;
+  final AstNode? border;
+  final AstNode? enabled;
+  final AstNode? semanticCounterText;
+  final AstNode? alignLabelWithHint;
+
+  const InputDecoration({
+    this.icon,
+    this.iconColor,
+    this.label,
+    this.labelText,
+    this.labelStyle,
+    this.floatingLabelStyle,
+    this.helperText,
+    this.helperStyle,
+    this.helperMaxLines,
+    this.hintText,
+    this.hintStyle,
+    this.hintTextDirection,
+    this.hintMaxLines,
+    this.errorText,
+    this.errorStyle,
+    this.errorMaxLines,
+    this.floatingLabelBehavior,
+    this.isCollapsed,
+    this.isDense,
+    this.contentPadding,
+    this.prefixIcon,
+    this.prefixIconColor,
+    this.prefix,
+    this.prefixText,
+    this.prefixStyle,
+    this.suffixIcon,
+    this.suffixIconColor,
+    this.suffix,
+    this.suffixText,
+    this.suffixStyle,
+    this.counterText,
+    this.counterStyle,
+    this.filled,
+    this.fillColor,
+    this.focusColor,
+    this.hoverColor,
+    this.errorBorder,
+    this.focusedBorder,
+    this.focusedErrorBorder,
+    this.disabledBorder,
+    this.enabledBorder,
+    this.border,
+    this.enabled,
+    this.semanticCounterText,
+    this.alignLabelWithHint,
+  });
+}
+
+class Alignment extends AstNode {
+  const Alignment();
+}
+
+class AlignmentTopLeft extends Alignment {
+  const AlignmentTopLeft();
+}
+
+class AlignmentTopCenter extends Alignment {
+  const AlignmentTopCenter();
+}
+
+class AlignmentTopRight extends Alignment {
+  const AlignmentTopRight();
+}
+
+class AlignmentCenterLeft extends Alignment {
+  const AlignmentCenterLeft();
+}
+
+class AlignmentCenterRight extends Alignment {
+  const AlignmentCenterRight();
+}
+
+class AlignmentBottomLeft extends Alignment {
+  const AlignmentBottomLeft();
+}
+
+class AlignmentBottomCenter extends Alignment {
+  const AlignmentBottomCenter();
+}
+
+class AlignmentBottomRight extends Alignment {
+  const AlignmentBottomRight();
+}
+
+class AlignmentCenter extends Alignment {
+  const AlignmentCenter();
+}

@@ -141,3 +141,60 @@ class GridViewBuilder extends AstWidget {
     this.maxCrossAxisExtent,
   );
 }
+
+class TextField extends AstWidget {
+  final AstNode? decoration;
+  final FunctionDeclaration? onSubmitted;
+  final FunctionDeclaration? onChanged;
+
+  const TextField(super.name,
+      [this.decoration, this.onSubmitted, this.onChanged]);
+}
+
+class ListTile extends AstWidget {
+  final AstNode? leading;
+  final AstNode? title;
+  final AstNode? subtitle;
+  final AstNode? trailing;
+  final FunctionDeclaration? onTap;
+
+  const ListTile(super.name,
+      [this.leading, this.title, this.subtitle, this.trailing, this.onTap]);
+}
+
+class Stack extends AstWidget {
+  final AstNode children;
+  final AstNode? alignment;
+
+  const Stack(super.name, this.children, [this.alignment]);
+}
+
+class TextButton extends AstWidget {
+  final AstWidget child;
+  final FunctionDeclaration onPressed;
+
+  const TextButton(super.name, this.child, this.onPressed);
+}
+
+class OutlinedButton extends AstWidget {
+  final AstWidget child;
+  final FunctionDeclaration onPressed;
+
+  const OutlinedButton(super.name, this.child, this.onPressed);
+}
+
+class LinearProgressIndicator extends AstWidget {
+  final AstNode? value;
+  final AstNode? backgroundColor;
+  final AstNode? color;
+  const LinearProgressIndicator(super.name,
+      [this.value, this.backgroundColor, this.color]);
+}
+
+class CircularProgressIndicator extends AstWidget {
+  final AstNode? value;
+  final AstNode? backgroundColor;
+  final AstNode? color;
+  const CircularProgressIndicator(super.name,
+      [this.value, this.backgroundColor, this.color]);
+}

@@ -2,13 +2,13 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:tart_dev/tart.dart';
+import 'package:tart_dev/tart.dart' as tart;
 
 void main() {
-  late Tart interpreter;
+  late tart.Tart interpreter;
 
   setUp(() {
-    interpreter = Tart(
+    interpreter = tart.Tart(
       importHandler: (filePath) => 'final text = "This variable was imported";',
     );
   });
@@ -98,11 +98,11 @@ return flutter::ElevatedButton(onPressed: () { x += 1; print('Button pressed!');
 return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: toString(x)));''';
 
     await tester.pumpWidget(
-      TartProvider(
+      tart.TartProvider(
         tart: interpreter,
         child: const MaterialApp(
           home: Scaffold(
-            body: TartStatefulWidget(
+            body: tart.TartStatefulWidget(
               source: tartScript,
               printBenchmarks: true,
             ),
@@ -468,5 +468,93 @@ return flutter::Text(text: text);''';
     );
 
     expect(find.text('This variable was imported'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render TextField', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::TextField(
+  decoration: parameter::InputDecoration(
+    labelText: 'Enter your name',
+  ),
+  onSubmitted: (value) {
+    print('Submitted value: ' + value);
+  },
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Enter your name'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render ListTile', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::ListTile(
+  title: flutter::Text(text: 'List Tile Title'),
+  subtitle: flutter::Text(text: 'List Tile Subtitle'),
+  trailing: flutter::Text(text: 'List Tile Trailing'),
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('List Tile Title'), findsOneWidget);
+    expect(find.text('List Tile Subtitle'), findsOneWidget);
+    expect(find.text('List Tile Trailing'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render LinearProgressIndicator',
+      (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::LinearProgressIndicator(
+  value: 0.5,
+  color: parameter::Color(r: 255, g: 0, b: 0),
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('Tart can render CircularProgressIndicator',
+      (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::CircularProgressIndicator(
+  value: 0.5,
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
