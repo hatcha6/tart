@@ -149,7 +149,8 @@ class Parser {
             params['mainAxisAlignment'],
             params['crossAxisAlignment'],
           ),
-      'Container': (name, params) => Container(name, params['child']),
+      'Container': (name, params) => Container(name, params['child'],
+          params['width'], params['height'], params['color']),
       'Image': (name, params) => Image(name, params['url']!),
       'Padding': (name, params) =>
           Padding(name, params['padding'], params['child']),
@@ -166,7 +167,12 @@ class Parser {
           ElevatedButton(name, params['child'], params['onPressed']),
       'Card': (name, params) =>
           Card(name, params['child'], params['elevation']),
-      'ListView': (name, params) => ListView(name, params['children']),
+      'ListView': (name, params) => ListView(
+            name,
+            params['children'],
+            params['shrinkWrap'],
+            params['physics'],
+          ),
       'GridView': (name, params) {
         final optionalParam = params['maxCrossAxisExtent'];
         final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
@@ -174,12 +180,16 @@ class Parser {
           name,
           params['children'] as AstNode,
           mainCrossAxisExtent,
+          params['shrinkWrap'],
+          params['physics'],
         );
       },
       'ListViewBuilder': (name, params) => ListViewBuilder(
             name,
             params['itemBuilder'],
             params['itemCount'],
+            params['shrinkWrap'],
+            params['physics'],
           ),
       'GridViewBuilder': (name, params) {
         final optionalParam = params['maxCrossAxisExtent'];
@@ -189,6 +199,8 @@ class Parser {
           params['itemBuilder'],
           params['itemCount'],
           mainCrossAxisExtent,
+          params['shrinkWrap'],
+          params['physics'],
         );
       },
       'TextField': (name, params) => TextField(
@@ -222,6 +234,40 @@ class Parser {
             params['value'],
             params['backgroundColor'],
             params['color'],
+          ),
+      'Positioned': (name, params) => Positioned(
+            name,
+            params['left'],
+            params['top'],
+            params['right'],
+            params['bottom'],
+            params['child'],
+          ),
+      'Icon': (name, params) => Icon(name, params['icon']),
+      'MaterialApp': (name, params) => MaterialApp(
+            name,
+            params['home'],
+          ),
+      'Scaffold': (name, params) => Scaffold(
+            name,
+            params['appBar'],
+            params['body'],
+            params['floatingActionButton'],
+          ),
+      'FloatingActionButton': (name, params) => FloatingActionButton(
+            name,
+            params['child'],
+            params['onPressed'],
+          ),
+      'AppBar': (name, params) => AppBar(
+            name,
+            params['title'],
+            params['leading'],
+            params['actions'],
+          ),
+      'SingleChildScrollView': (name, params) => SingleChildScrollView(
+            name,
+            params['child'],
           ),
     };
 
@@ -257,6 +303,8 @@ class Parser {
       'FontWeight': parseFontWeight,
       'InputDecoration': parseInputDecoration,
       'Alignment': parseAlignment,
+      'ScrollPhysics': parseScrollPhysics,
+      'Icons': parseIcons,
     };
 
     for (final entry in parameterParsers.entries) {
@@ -266,6 +314,46 @@ class Parser {
     }
 
     throw error(name, "Unknown Flutter parameter type: ${name.lexeme}");
+  }
+
+  ScrollPhysics parseScrollPhysics(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after ScrollPhysics method.");
+    const scrollPhysicsMap = {
+      'AlwaysScrollableScrollPhysics': AlwaysScrollableScrollPhysics(),
+      'BouncingScrollPhysics': BouncingScrollPhysics(),
+      'ClampingScrollPhysics': ClampingScrollPhysics(),
+      'NeverScrollableScrollPhysics': NeverScrollableScrollPhysics(),
+    };
+    final result = scrollPhysicsMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown ScrollPhysics method: ${name.lexeme}");
+    }
+    consume(TokenType.rightParen, "Expect ')' after ScrollPhysics parameters.");
+    return result;
+  }
+
+  Icons parseIcons(Token name) {
+    consume(TokenType.leftParen, "Expect '(' after Icons method.");
+    const iconsMap = {
+      'IconsArrowForward': IconsArrowForward(),
+      'IconsArrowBack': IconsArrowBack(),
+      'IconsInfo': IconsInfo(),
+      'IconsAdd': IconsAdd(),
+      'IconsRemove': IconsRemove(),
+      'IconsEdit': IconsEdit(),
+      'IconsDelete': IconsDelete(),
+      'IconsSave': IconsSave(),
+      'IconsCancel': IconsCancel(),
+      'IconsSearch': IconsSearch(),
+      'IconsClear': IconsClear(),
+      'IconsClose': IconsClose(),
+    };
+    final result = iconsMap[name.lexeme];
+    if (result == null) {
+      throw error(name, "Unknown Icons method: ${name.lexeme}");
+    }
+    consume(TokenType.rightParen, "Expect ')' after Icons parameters.");
+    return result;
   }
 
   Alignment parseAlignment(Token name) {

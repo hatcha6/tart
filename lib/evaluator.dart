@@ -331,8 +331,18 @@ class Evaluator {
           crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
           children: _evaluateListOfWidgets(children),
         ),
-      Container(child: final child) =>
-        flt.Container(child: _evaluateWidget(child)),
+      Container(
+        child: final child,
+        width: final width,
+        height: final height,
+        color: final color
+      ) =>
+        flt.Container(
+          width: width != null ? evaluateNode(width).toDouble() : null,
+          height: height != null ? evaluateNode(height).toDouble() : null,
+          color: color != null ? _convertColor(color as Color) : null,
+          child: child != null ? _evaluateWidget(child) : null,
+        ),
       Image(url: final url) => flt.Image.network(evaluateNode(url)),
       Padding(padding: final padding, child: final child) => flt.Padding(
           padding: _convertEdgeInsets(padding),
@@ -346,7 +356,7 @@ class Evaluator {
           child: child != null ? _evaluateWidget(child) : null,
         ),
       Expanded(child: final child, flex: final flex) => flt.Expanded(
-          flex: flex != null ? evaluateNode(flex) : null,
+          flex: flex != null ? evaluateNode(flex) : 1,
           child: _evaluateWidget(child),
         ),
       ElevatedButton(child: final child, onPressed: final onPressed) =>
@@ -488,6 +498,37 @@ class Evaluator {
           color: color != null ? _convertColor(color as Color) : null,
         ),
       CustomAstWidget() => _evaluateCustomWidget(node),
+      SingleChildScrollView(child: final child) =>
+        flt.SingleChildScrollView(child: _evaluateWidget(child)),
+      MaterialApp(home: final child) =>
+        flt.MaterialApp(home: _evaluateWidget(child)),
+      Scaffold(body: final body) => flt.Scaffold(body: _evaluateWidget(body)),
+      FloatingActionButton(child: final child, onPressed: final onPressed) =>
+        flt.FloatingActionButton(
+          onPressed: () => callFunctionDeclaration(
+            onPressed,
+            onPressed.parameters,
+          ),
+          child: _evaluateWidget(child),
+        ),
+      AppBar(
+        title: final title,
+        leading: final leading,
+        actions: final actions
+      ) =>
+        flt.AppBar(
+          title: _evaluateWidget(title as AstWidget),
+          leading:
+              leading != null ? _evaluateWidget(leading as AstWidget) : null,
+          actions: actions != null ? _evaluateListOfWidgets(actions) : null,
+        ),
+      Icon(icon: final icon) => flt.Icon(_convertIcon(icon as Icons)),
+      Positioned(child: final child, top: final top, left: final left) =>
+        flt.Positioned(
+          top: top != null ? evaluateNode(top).toDouble() : null,
+          left: left != null ? evaluateNode(left).toDouble() : null,
+          child: _evaluateWidget(child as AstWidget),
+        ),
     };
   }
 
@@ -549,6 +590,24 @@ class Evaluator {
 
   dynamic getVariable(String name) {
     return _environment.getValue(name);
+  }
+
+  flt.IconData _convertIcon(Icons node) {
+    return switch (node) {
+      IconsSave() => flt.Icons.save,
+      IconsCancel() => flt.Icons.cancel,
+      IconsSearch() => flt.Icons.search,
+      IconsClear() => flt.Icons.clear,
+      IconsClose() => flt.Icons.close,
+      IconsAdd() => flt.Icons.add,
+      IconsRemove() => flt.Icons.remove,
+      IconsEdit() => flt.Icons.edit,
+      IconsDelete() => flt.Icons.delete,
+      IconsArrowBack() => flt.Icons.arrow_back,
+      IconsArrowForward() => flt.Icons.arrow_forward,
+      IconsInfo() => flt.Icons.info,
+      _ => throw EvaluationError('Unknown icon: ${node.runtimeType}'),
+    };
   }
 
   flt.TextStyle _convertTextStyle(TextStyle style) {

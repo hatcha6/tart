@@ -56,9 +56,13 @@ class Row extends AstWidget {
 }
 
 class Container extends AstWidget {
-  final AstWidget child;
+  final AstNode? width;
+  final AstNode? height;
+  final AstNode? color;
+  final AstWidget? child;
 
-  const Container(super.name, this.child);
+  const Container(super.name,
+      [this.child, this.width, this.height, this.color]);
 }
 
 class Image extends AstWidget {
@@ -111,34 +115,46 @@ class Card extends AstWidget {
 
 class ListView extends AstWidget {
   final AstNode children;
+  final AstNode? shrinkWrap;
+  final AstNode? physics;
 
-  const ListView(super.name, this.children);
+  const ListView(super.name, this.children, [this.shrinkWrap, this.physics]);
 }
 
 class GridView extends AstWidget {
   final AstNode maxCrossAxisExtent;
   final AstNode children;
+  final AstNode? shrinkWrap;
+  final AstNode? physics;
 
-  const GridView(super.name, this.children, this.maxCrossAxisExtent);
+  const GridView(super.name, this.children, this.maxCrossAxisExtent,
+      [this.shrinkWrap, this.physics]);
 }
 
 class ListViewBuilder extends AstWidget {
   final FunctionDeclaration itemBuilder;
   final AstNode itemCount;
+  final AstNode? shrinkWrap;
+  final AstNode? physics;
 
-  const ListViewBuilder(super.name, this.itemBuilder, this.itemCount);
+  const ListViewBuilder(super.name, this.itemBuilder, this.itemCount,
+      [this.shrinkWrap, this.physics]);
 }
 
 class GridViewBuilder extends AstWidget {
   final FunctionDeclaration itemBuilder;
   final AstNode itemCount;
   final AstNode maxCrossAxisExtent;
+  final AstNode? shrinkWrap;
+  final AstNode? physics;
 
   const GridViewBuilder(
     super.name,
     this.itemBuilder,
     this.itemCount,
     this.maxCrossAxisExtent,
+    this.shrinkWrap,
+    this.physics,
   );
 }
 
@@ -203,4 +219,56 @@ class CustomAstWidget extends AstWidget {
   final Map<String, AstNode> params;
 
   const CustomAstWidget(super.name, this.params);
+}
+
+class SingleChildScrollView extends AstWidget {
+  final AstWidget child;
+
+  const SingleChildScrollView(super.name, this.child);
+}
+
+class MaterialApp extends AstWidget {
+  final AstWidget home;
+
+  const MaterialApp(super.name, this.home);
+}
+
+class Scaffold extends AstWidget {
+  final AstWidget appBar;
+  final AstWidget body;
+  final AstWidget floatingActionButton;
+
+  const Scaffold(super.name, this.appBar, this.body, this.floatingActionButton);
+}
+
+class FloatingActionButton extends AstWidget {
+  final AstWidget child;
+  final FunctionDeclaration onPressed;
+
+  const FloatingActionButton(super.name, this.child, this.onPressed);
+}
+
+class AppBar extends AstWidget {
+  final AstNode title;
+  final AstNode? leading;
+  final AstNode? actions;
+
+  const AppBar(super.name, this.title, [this.leading, this.actions]);
+}
+
+class Icon extends AstWidget {
+  final AstNode icon;
+
+  const Icon(super.name, this.icon);
+}
+
+class Positioned extends AstWidget {
+  final AstNode? left;
+  final AstNode? top;
+  final AstNode? right;
+  final AstNode? bottom;
+  final AstWidget? child;
+
+  const Positioned(super.name,
+      [this.left, this.top, this.right, this.bottom, this.child]);
 }

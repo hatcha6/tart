@@ -1,8 +1,16 @@
 // ignore_for_file: avoid_print
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:tart_dev/tart.dart' as tart;
+
+/// Get a stable path to a test resource by scanning up to the project root.
+File getProjectFile(String path) {
+  var dir = Directory.current;
+  return File('${dir.path}/$path');
+}
 
 void main() {
   late tart.Tart interpreter;
@@ -112,7 +120,6 @@ return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flu
           home: Scaffold(
             body: tart.TartStatefulWidget(
               source: tartScript,
-              printBenchmarks: true,
             ),
           ),
         ),
@@ -655,5 +662,28 @@ return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!');
     await tester.pumpAndSettle();
 
     expect(interpreter.getGlobalVariable('x'), equals(1));
+  });
+
+  testWidgets('Tart can handle large widget trees',
+      (WidgetTester tester) async {
+    final file = getProjectFile('assets/large_test.tart');
+    final tartScript = file.readAsStringSync();
+
+    await tester.pumpWidget(
+      tart.TartProvider(
+        tart: interpreter,
+        child: MaterialApp(
+          home: Scaffold(
+            body: tart.TartStatefulWidget(
+              source: tartScript,
+              printBenchmarks: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Large Tart Test App'), findsOneWidget);
+    await tester.pumpAndSettle();
   });
 }

@@ -240,3 +240,75 @@ class AlignmentBottomRight extends Alignment {
 class AlignmentCenter extends Alignment {
   const AlignmentCenter();
 }
+
+class ScrollPhysics extends AstNode {
+  const ScrollPhysics();
+}
+
+class NeverScrollableScrollPhysics extends ScrollPhysics {
+  const NeverScrollableScrollPhysics();
+}
+
+class AlwaysScrollableScrollPhysics extends ScrollPhysics {
+  const AlwaysScrollableScrollPhysics();
+}
+
+class BouncingScrollPhysics extends ScrollPhysics {
+  const BouncingScrollPhysics();
+}
+
+class ClampingScrollPhysics extends ScrollPhysics {
+  const ClampingScrollPhysics();
+}
+
+class Icons extends AstNode {
+  const Icons();
+}
+
+class IconsArrowForward extends Icons {
+  const IconsArrowForward();
+}
+
+class IconsArrowBack extends Icons {
+  const IconsArrowBack();
+}
+
+class IconsInfo extends Icons {
+  const IconsInfo();
+}
+
+class IconsAdd extends Icons {
+  const IconsAdd();
+}
+
+class IconsRemove extends Icons {
+  const IconsRemove();
+}
+
+class IconsEdit extends Icons {
+  const IconsEdit();
+}
+
+class IconsDelete extends Icons {
+  const IconsDelete();
+}
+
+class IconsSave extends Icons {
+  const IconsSave();
+}
+
+class IconsCancel extends Icons {
+  const IconsCancel();
+}
+
+class IconsSearch extends Icons {
+  const IconsSearch();
+}
+
+class IconsClear extends Icons {
+  const IconsClear();
+}
+
+class IconsClose extends Icons {
+  const IconsClose();
+}
