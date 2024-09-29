@@ -320,4 +320,120 @@ void main() {
       equals(55),
     );
   });
+
+  test('Throws error when assigning to const or final variable', () {
+    // Const variable
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartConst, "const", null, 1),
+      Token(TokenType.identifier, "constVar", null, 1),
+      Literal(10),
+    ));
+
+    expect(
+        () => evaluator.evaluateNode(const Assignment(
+              Token(TokenType.identifier, "constVar", null, 1),
+              Token(TokenType.assign, "=", null, 1),
+              Literal(20),
+            )),
+        throwsA(isA<EvaluationError>()));
+
+    // Final variable
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartFinal, "final", null, 1),
+      Token(TokenType.identifier, "finalVar", null, 1),
+      Literal(30),
+    ));
+
+    expect(
+        () => evaluator.evaluateNode(const Assignment(
+              Token(TokenType.identifier, "finalVar", null, 1),
+              Token(TokenType.assign, "=", null, 1),
+              Literal(40),
+            )),
+        throwsA(isA<EvaluationError>()));
+  });
+
+  test('Evaluates for loop', () {
+    // Declare a variable to store the sum
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1),
+      Token(TokenType.identifier, "sum", null, 1),
+      Literal(0),
+    ));
+
+    // Create a for loop that sums numbers from 1 to 5
+    var forLoop = const ForStatement(
+      VariableDeclaration(
+        Token(TokenType.tartVar, "var", null, 1),
+        Token(TokenType.identifier, "i", null, 1),
+        Literal(1),
+      ),
+      BinaryExpression(
+        Variable(Token(TokenType.identifier, "i", null, 1)),
+        Token(TokenType.lessEqual, "<=", null, 1),
+        Literal(5),
+      ),
+      Assignment(
+        Token(TokenType.identifier, "i", null, 1),
+        Token(TokenType.assign, "=", null, 1),
+        BinaryExpression(
+          Variable(Token(TokenType.identifier, "i", null, 1)),
+          Token(TokenType.plus, "+", null, 1),
+          Literal(1),
+        ),
+      ),
+      Block([
+        ExpressionStatement(Assignment(
+          Token(TokenType.identifier, "sum", null, 1),
+          Token(TokenType.assign, "=", null, 1),
+          BinaryExpression(
+            Variable(Token(TokenType.identifier, "sum", null, 1)),
+            Token(TokenType.plus, "+", null, 1),
+            Variable(Token(TokenType.identifier, "i", null, 1)),
+          ),
+        )),
+      ]),
+    );
+
+    evaluator.evaluateNode(forLoop);
+    expect(evaluator.getVariable('sum'), equals(15));
+  });
+
+  test('Evaluates callFunction method', () {
+    // Test calling a FunctionDeclaration
+    const funcDecl = FunctionDeclaration(
+      Token(TokenType.identifier, "add", null, 1),
+      [
+        Token(TokenType.identifier, "a", null, 1),
+        Token(TokenType.identifier, "b", null, 1),
+      ],
+      Block([
+        ReturnStatement(
+          Token(TokenType.tartReturn, "return", null, 1),
+          BinaryExpression(
+            Variable(Token(TokenType.identifier, "a", null, 1)),
+            Token(TokenType.plus, "+", null, 1),
+            Variable(Token(TokenType.identifier, "b", null, 1)),
+          ),
+        ),
+      ]),
+    );
+    evaluator.evaluateNode(funcDecl);
+
+    expect(evaluator.callFunction("add", [3, 4]), equals(7));
+
+    // Test calling a native Dart function
+    evaluator.defineGlobalVariable(
+        'multiply', (List args) => args[0] * args[1]);
+    expect(evaluator.callFunction("multiply", [5, 6]), equals(30));
+
+    // Test calling a non-existent function
+    expect(() => evaluator.callFunction("nonexistent", []),
+        throwsA(isA<EvaluationError>()));
+
+    // Test calling a non-callable value
+    evaluator.defineGlobalVariable('notAFunction', 42);
+    expect(() => evaluator.callFunction("notAFunction", []),
+        throwsA(isA<EvaluationError>()));
+  });
 }

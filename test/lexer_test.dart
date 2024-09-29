@@ -102,4 +102,24 @@ void main() {
       expect(tokens.map((t) => t.line), [1, 2, 3, 3]);
     });
   });
+
+  test('toString returns correct string representation', () {
+    const tokenWithLiteral = Token(
+      TokenType.string,
+      '"Hello"',
+      'Hello',
+      1,
+    );
+    expect(tokenWithLiteral.toString(),
+        'Token(type: TokenType.string, lexeme: ""Hello"" (Hello), line: 1)');
+
+    const tokenWithoutLiteral = Token(
+      TokenType.eof,
+      '',
+      null,
+      2,
+    );
+    expect(tokenWithoutLiteral.toString(),
+        'Token(type: TokenType.eof, lexeme: "", line: 2)');
+  });
 }

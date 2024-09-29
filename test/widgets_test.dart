@@ -582,4 +582,78 @@ return flutter::CustomButton(text: 'Custom Button');''';
 
     expect(find.text('Custom Button'), findsOneWidget);
   });
+
+  testWidgets('Tart can render Stack', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Stack(
+  children: [
+    flutter::Text(text: 'Left'),
+    flutter::Text(text: 'Center'),
+    flutter::Text(text: 'Right'),
+  ]
+);''';
+
+    final result = interpreter.run(tartScript);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Left'), findsOneWidget);
+    expect(find.text('Center'), findsOneWidget);
+    expect(find.text('Right'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render a TextButton', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('x', 0);
+    const String tartScript = '''
+return flutter::TextButton(onPressed: () { x += 1; print('Button pressed!'); }, child: flutter::Text(text: 'Press me'));''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: widget,
+        ),
+      ),
+    );
+
+    expect(find.text('Press me'), findsOneWidget);
+
+    await tester.tap(find.text('Press me'));
+    await tester.pumpAndSettle();
+
+    expect(interpreter.getGlobalVariable('x'), equals(1));
+  });
+
+  testWidgets('Tart can render a OutlinedButton', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('x', 0);
+    const String tartScript = '''
+return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!'); }, child: flutter::Text(text: 'Press me'));''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: widget,
+        ),
+      ),
+    );
+
+    expect(find.text('Press me'), findsOneWidget);
+
+    await tester.tap(find.text('Press me'));
+    await tester.pumpAndSettle();
+
+    expect(interpreter.getGlobalVariable('x'), equals(1));
+  });
 }
