@@ -198,3 +198,9 @@ class CircularProgressIndicator extends AstWidget {
   const CircularProgressIndicator(super.name,
       [this.value, this.backgroundColor, this.color]);
 }
+
+class CustomAstWidget extends AstWidget {
+  final Map<String, AstNode> params;
+
+  const CustomAstWidget(super.name, this.params);
+}

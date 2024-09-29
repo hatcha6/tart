@@ -229,7 +229,9 @@ class Parser {
     if (widgetFactory != null) {
       return widgetFactory(name, parameters);
     }
-    throw error(name, "Unknown Flutter widget: ${name.lexeme}");
+
+    // Handle custom widgets
+    return CustomAstWidget(name, parameters);
   }
 
   AstNode parameterValue() {

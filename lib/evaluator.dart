@@ -11,6 +11,12 @@ class EvaluationError implements Exception {
   String toString() => 'EvaluationError: $message';
 }
 
+// Add this class
+class ReturnException implements Exception {
+  final dynamic value;
+  ReturnException(this.value);
+}
+
 class Environment {
   final Environment? enclosing;
   final Map<String, dynamic> values = {};
@@ -26,33 +32,36 @@ class Environment {
   }
 
   dynamic get(Token name) {
-    if (values.containsKey(name.lexeme)) {
-      return values[name.lexeme];
-    }
-    if (enclosing != null) return enclosing!.get(name);
-    throw EvaluationError("Undefined variable '${name.lexeme}'.");
+    return _getFromEnvironment(name.lexeme);
   }
 
   dynamic getValue(String name) {
-    if (values.containsKey(name)) {
-      return values[name];
+    return _getFromEnvironment(name);
+  }
+
+  dynamic _getFromEnvironment(String name) {
+    Environment? environment = this;
+    while (environment != null) {
+      if (environment.values.containsKey(name)) {
+        return environment.values[name];
+      }
+      environment = environment.enclosing;
     }
-    if (enclosing != null) return enclosing!.getValue(name);
     throw EvaluationError("Undefined variable '$name'.");
   }
 
   void assign(Token name, dynamic value) {
-    if (immutableVariables.contains(name.lexeme)) {
-      throw EvaluationError(
-          "Cannot reassign to final or const variable '${name.lexeme}'.");
-    }
-    if (values.containsKey(name.lexeme)) {
-      values[name.lexeme] = value;
-      return;
-    }
-    if (enclosing != null) {
-      enclosing!.assign(name, value);
-      return;
+    Environment? environment = this;
+    while (environment != null) {
+      if (environment.values.containsKey(name.lexeme)) {
+        if (environment.immutableVariables.contains(name.lexeme)) {
+          throw EvaluationError(
+              "Cannot reassign to final or const variable '${name.lexeme}'.");
+        }
+        environment.values[name.lexeme] = value;
+        return;
+      }
+      environment = environment.enclosing;
     }
     throw EvaluationError("Undefined variable '${name.lexeme}'.");
   }
@@ -67,9 +76,12 @@ class Evaluator {
 
   late final List<AstNode> Function(String filepath) _importHandler;
 
+  // Add this map to store custom widget factories
+  final Map<String, flt.Widget Function(Map<String, dynamic> params)>
+      _customWidgetFactories = {};
+
   Evaluator() {
     _environment = _globals;
-    // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
   }
 
@@ -77,10 +89,20 @@ class Evaluator {
     _importHandler = importHandler;
   }
 
+  // Method to register custom widgets
+  void registerCustomWidget(String widgetName,
+      flt.Widget Function(Map<String, dynamic> params) factory) {
+    _customWidgetFactories[widgetName] = factory;
+  }
+
   dynamic evaluate(List<AstNode> nodes) {
     dynamic result;
     for (var node in nodes) {
-      result = evaluateNode(node);
+      try {
+        result = evaluateNode(node);
+      } on ReturnException catch (e) {
+        result = e.value; // Handle return value
+      }
     }
     return result;
   }
@@ -210,7 +232,7 @@ class Evaluator {
 
   dynamic _evaluateReturnStatement(ReturnStatement node) {
     dynamic value = node.value != null ? evaluateNode(node.value!) : null;
-    return value;
+    throw ReturnException(value); // Throw exception instead of returning
   }
 
   dynamic _evaluateBlock(Block node) {
@@ -465,6 +487,7 @@ class Evaluator {
               : null,
           color: color != null ? _convertColor(color as Color) : null,
         ),
+      CustomAstWidget() => _evaluateCustomWidget(node),
     };
   }
 
@@ -474,18 +497,21 @@ class Evaluator {
 
   dynamic callFunctionDeclaration(
       FunctionDeclaration declaration, List<dynamic> arguments) {
+    Environment functionEnv = Environment(_environment);
+
+    for (int i = 0; i < declaration.parameters.length; i++) {
+      functionEnv.define(declaration.parameters[i].lexeme, arguments[i], 'var');
+    }
+
     Environment previousEnv = _environment;
-    _environment = Environment(_globals);
+    _environment = functionEnv;
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
     try {
-      for (int i = 0; i < declaration.parameters.length; i++) {
-        _environment.define(
-            declaration.parameters[i].lexeme, arguments[i], 'var');
-      }
-
       return evaluateNode(declaration.body);
+    } on ReturnException catch (e) {
+      return e.value; // Handle return value
     } finally {
       _environment = previousEnv;
       _isGlobalScope = wasGlobalScope;
@@ -822,5 +848,17 @@ class Evaluator {
       }
       throw EvaluationError('Expected a list of widgets or a ListLiteral');
     }
+  }
+
+  flt.Widget _evaluateCustomWidget(CustomAstWidget node) {
+    final factory = _customWidgetFactories[node.name.lexeme];
+    if (factory != null) {
+      Map<String, dynamic> params = {};
+      for (var entry in node.params.entries) {
+        params[entry.key] = evaluateNode(entry.value);
+      }
+      return factory(params);
+    }
+    throw EvaluationError("Unknown custom widget: ${node.name.lexeme}");
   }
 }

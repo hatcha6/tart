@@ -62,12 +62,19 @@ class Tart {
   final Lexer lexer;
   final String Function(String filePath)? _importHandler;
 
-  Tart({String Function(String filePath)? importHandler})
+  Tart(
+      {String Function(String filePath)? importHandler,
+      Map<String, Widget Function(Map<String, dynamic> params)>? customWidgets})
       : _importHandler = importHandler,
         evaluator = Evaluator(),
         parser = Parser(),
         lexer = Lexer() {
     evaluator.setImportHandler(_handleImport);
+    if (customWidgets != null) {
+      customWidgets.forEach((name, factory) {
+        evaluator.registerCustomWidget(name, factory);
+      });
+    }
   }
 
   List<AstNode> _handleImport(String filePath) {
@@ -193,6 +200,11 @@ class Tart {
 
   int _getMemoryUsage() {
     return ProcessInfo.currentRss;
+  }
+
+  void registerCustomWidget(
+      String name, Widget Function(Map<String, dynamic> params) factory) {
+    evaluator.registerCustomWidget(name, factory);
   }
 }
 

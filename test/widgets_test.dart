@@ -10,6 +10,14 @@ void main() {
   setUp(() {
     interpreter = tart.Tart(
       importHandler: (filePath) => 'final text = "This variable was imported";',
+      customWidgets: {
+        'CustomButton': (params) => ElevatedButton(
+              onPressed: () {
+                print('Custom Button pressed!');
+              },
+              child: Text(params['text'] as String),
+            ),
+      },
     );
   });
 
@@ -556,5 +564,22 @@ return flutter::CircularProgressIndicator(
     );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('Tart can render CustomButton', (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::CustomButton(text: 'Custom Button');''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Custom Button'), findsOneWidget);
   });
 }

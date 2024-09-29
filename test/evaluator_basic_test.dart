@@ -223,4 +223,101 @@ void main() {
     );
     expect(() => evaluator.evaluateNode(expr), throwsA(isA<EvaluationError>()));
   });
+
+  test('Evaluates recursive Fibonacci function', () {
+    const fibFunction = FunctionDeclaration(
+      Token(TokenType.identifier, 'fib', null, 1),
+      [Token(TokenType.identifier, 'n', null, 1)],
+      Block([
+        IfStatement(
+          BinaryExpression(
+            Variable(Token(TokenType.identifier, 'n', null, 1)),
+            Token(TokenType.lessEqual, '<=', null, 1),
+            Literal(1),
+          ),
+          Block([
+            ReturnStatement(
+              Token(TokenType.tartReturn, 'return', null, 1),
+              Variable(Token(TokenType.identifier, 'n', null, 1)),
+            ),
+          ]),
+          null,
+        ),
+        ReturnStatement(
+          Token(TokenType.tartReturn, 'return', null, 1),
+          BinaryExpression(
+            CallExpression(
+              Variable(Token(TokenType.identifier, 'fib', null, 1)),
+              Token(TokenType.leftParen, '(', null, 1),
+              [
+                BinaryExpression(
+                  Variable(Token(TokenType.identifier, 'n', null, 1)),
+                  Token(TokenType.minus, '-', null, 1),
+                  Literal(1),
+                ),
+              ],
+            ),
+            Token(TokenType.plus, '+', null, 1),
+            CallExpression(
+              Variable(Token(TokenType.identifier, 'fib', null, 1)),
+              Token(TokenType.leftParen, '(', null, 1),
+              [
+                BinaryExpression(
+                  Variable(Token(TokenType.identifier, 'n', null, 1)),
+                  Token(TokenType.minus, '-', null, 1),
+                  Literal(2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ]),
+    );
+
+    evaluator.evaluateNode(fibFunction);
+
+    expect(
+      evaluator.evaluateNode(
+        const CallExpression(
+          Variable(Token(TokenType.identifier, 'fib', null, 1)),
+          Token(TokenType.leftParen, '(', null, 1),
+          [Literal(0)],
+        ),
+      ),
+      equals(0),
+    );
+
+    expect(
+      evaluator.evaluateNode(
+        const CallExpression(
+          Variable(Token(TokenType.identifier, 'fib', null, 1)),
+          Token(TokenType.leftParen, '(', null, 1),
+          [Literal(1)],
+        ),
+      ),
+      equals(1),
+    );
+
+    expect(
+      evaluator.evaluateNode(
+        const CallExpression(
+          Variable(Token(TokenType.identifier, 'fib', null, 1)),
+          Token(TokenType.leftParen, '(', null, 1),
+          [Literal(5)],
+        ),
+      ),
+      equals(5),
+    );
+
+    expect(
+      evaluator.evaluateNode(
+        const CallExpression(
+          Variable(Token(TokenType.identifier, 'fib', null, 1)),
+          Token(TokenType.leftParen, '(', null, 1),
+          [Literal(10)],
+        ),
+      ),
+      equals(55),
+    );
+  });
 }
