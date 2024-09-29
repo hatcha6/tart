@@ -683,7 +683,7 @@ return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!');
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Large Tart Test App'), findsOneWidget);
+    expect(find.text('Custom Large Button'), findsOneWidget);
     await tester.pumpAndSettle();
   });
 }
