@@ -3,6 +3,7 @@ library tart;
 import 'ast.dart';
 import 'token.dart';
 import 'package:flutter/material.dart' as flt;
+import 'dart:math';
 
 class EvaluationError implements Exception {
   final String message;
@@ -15,6 +16,28 @@ class EvaluationError implements Exception {
 class ReturnException implements Exception {
   final dynamic value;
   ReturnException(this.value);
+}
+
+// Add this class at the top of the file
+class EvaluationMetrics {
+  int widgetCount = 0;
+  int nodeCount = 0;
+  int variableCount = 0;
+  int functionCallCount = 0;
+  int expressionCount = 0;
+
+  void reset() {
+    widgetCount = 0;
+    nodeCount = 0;
+    variableCount = 0;
+    functionCallCount = 0;
+    expressionCount = 0;
+  }
+
+  @override
+  String toString() {
+    return 'EvaluationMetrics(widgets: $widgetCount, nodes: $nodeCount, variables: $variableCount, functionCalls: $functionCallCount, expressions: $expressionCount)';
+  }
 }
 
 class Environment {
@@ -70,8 +93,9 @@ class Environment {
 class BreakException implements Exception {}
 
 class Evaluator {
+  final Map<String, Environment> _environments = {};
   final Environment _globals = Environment();
-  late Environment _environment;
+  late Environment _currentEnvironment;
   bool _isGlobalScope = true;
 
   late final List<AstNode> Function(String filepath) _importHandler;
@@ -80,8 +104,35 @@ class Evaluator {
   final Map<String, flt.Widget Function(Map<String, dynamic> params)>
       _customWidgetFactories = {};
 
+  final EvaluationMetrics metrics = EvaluationMetrics();
+
+  String createIsolatedEnvironment() {
+    String id = _generateUniqueId();
+    _environments[id] = Environment(_globals);
+    return id;
+  }
+
+  void setCurrentEnvironment(String id) {
+    if (!_environments.containsKey(id)) {
+      throw EvaluationError('Environment with ID $id does not exist');
+    }
+    _currentEnvironment = _environments[id]!;
+  }
+
+  void removeEnvironment(String id) {
+    _environments.remove(id);
+  }
+
+  String _generateUniqueId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    Random random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        10, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+  }
+
   Evaluator() {
-    _environment = _globals;
+    _currentEnvironment = _globals;
+    // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
   }
 
@@ -95,19 +146,24 @@ class Evaluator {
     _customWidgetFactories[widgetName] = factory;
   }
 
-  dynamic evaluate(List<AstNode> nodes) {
+  dynamic evaluate(List<AstNode> nodes, {String? environmentId}) {
+    if (environmentId != null) {
+      setCurrentEnvironment(environmentId);
+    }
+
     dynamic result;
     for (var node in nodes) {
       try {
         result = evaluateNode(node);
       } on ReturnException catch (e) {
-        result = e.value; // Handle return value
+        result = e.value;
       }
     }
     return result;
   }
 
   dynamic evaluateNode(AstNode node) {
+    metrics.nodeCount++;
     return switch (node) {
       VariableDeclaration() => _evaluateVariableDeclaration(node),
       AnonymousFunction() => _evaluateAnonymousFunction(node),
@@ -122,7 +178,7 @@ class Evaluator {
       UnaryExpression() => _evaluateUnaryExpression(node),
       CallExpression() => _evaluateCallExpression(node),
       Literal() => node.value,
-      Variable() => _environment.get(node.name),
+      Variable() => _currentEnvironment.get(node.name),
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
@@ -138,18 +194,19 @@ class Evaluator {
   }
 
   dynamic _evaluateVariableDeclaration(VariableDeclaration node) {
+    metrics.variableCount++;
     dynamic value =
         node.initializer != null ? evaluateNode(node.initializer!) : null;
     if (_isGlobalScope) {
       _globals.define(node.name.lexeme, value, node.keyword.lexeme);
     } else {
-      _environment.define(node.name.lexeme, value, node.keyword.lexeme);
+      _currentEnvironment.define(node.name.lexeme, value, node.keyword.lexeme);
     }
     return value;
   }
 
   dynamic _evaluateFunctionDeclaration(FunctionDeclaration node) {
-    _environment.define(node.name.lexeme, node, 'final');
+    _currentEnvironment.define(node.name.lexeme, node, 'final');
     return node;
   }
 
@@ -159,8 +216,8 @@ class Evaluator {
   }
 
   dynamic _evaluateIfStatement(IfStatement node) {
-    Environment previousEnv = _environment;
-    _environment = Environment(_environment);
+    Environment previousEnv = _currentEnvironment;
+    _currentEnvironment = Environment(_currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -171,15 +228,15 @@ class Evaluator {
         return evaluateNode(node.elseBranch!);
       }
     } finally {
-      _environment = previousEnv;
+      _currentEnvironment = previousEnv;
       _isGlobalScope = wasGlobalScope;
     }
     return null;
   }
 
   dynamic _evaluateWhileStatement(WhileStatement node) {
-    Environment previousEnv = _environment;
-    _environment = Environment(_environment);
+    Environment previousEnv = _currentEnvironment;
+    _currentEnvironment = Environment(_currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -194,15 +251,15 @@ class Evaluator {
     } on BreakException {
       // Ignore break at the loop level
     } finally {
-      _environment = previousEnv;
+      _currentEnvironment = previousEnv;
       _isGlobalScope = wasGlobalScope;
     }
     return null;
   }
 
   dynamic _evaluateForStatement(ForStatement node) {
-    Environment previousEnv = _environment;
-    _environment = Environment(_environment);
+    Environment previousEnv = _currentEnvironment;
+    _currentEnvironment = Environment(_currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -224,7 +281,7 @@ class Evaluator {
     } on BreakException {
       // Ignore break at the loop level
     } finally {
-      _environment = previousEnv;
+      _currentEnvironment = previousEnv;
       _isGlobalScope = wasGlobalScope;
     }
     return null;
@@ -236,8 +293,8 @@ class Evaluator {
   }
 
   dynamic _evaluateBlock(Block node) {
-    Environment previousEnv = _environment;
-    _environment = Environment(_environment);
+    Environment previousEnv = _currentEnvironment;
+    _currentEnvironment = Environment(_currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -247,13 +304,14 @@ class Evaluator {
         value = evaluateNode(statement);
       }
     } finally {
-      _environment = previousEnv;
+      _currentEnvironment = previousEnv;
       _isGlobalScope = wasGlobalScope;
     }
     return value;
   }
 
   dynamic _evaluateBinaryExpression(BinaryExpression node) {
+    metrics.expressionCount++;
     dynamic left = evaluateNode(node.left);
     dynamic right = evaluateNode(node.right);
 
@@ -276,6 +334,7 @@ class Evaluator {
   }
 
   dynamic _evaluateUnaryExpression(UnaryExpression node) {
+    metrics.expressionCount++;
     dynamic right = evaluateNode(node.right);
 
     return switch (node.operator.type) {
@@ -287,6 +346,7 @@ class Evaluator {
   }
 
   dynamic _evaluateCallExpression(CallExpression node) {
+    metrics.functionCallCount++;
     dynamic callee = evaluateNode(node.callee);
 
     List<dynamic> arguments =
@@ -303,11 +363,12 @@ class Evaluator {
 
   dynamic _evaluateAssignment(Assignment node) {
     dynamic value = evaluateNode(node.value);
-    _environment.assign(node.name, value);
+    _currentEnvironment.assign(node.name, value);
     return value;
   }
 
   flt.Widget _evaluateWidget(AstWidget node) {
+    metrics.widgetCount++;
     return switch (node) {
       Text(text: final text, style: final style) => flt.Text(evaluateNode(text),
           style: style != null ? _convertTextStyle(style) : null),
@@ -390,10 +451,10 @@ class Evaluator {
       ) =>
         flt.ListView.builder(
           itemBuilder: (context, index) {
-            final previousEnvironment = _environment;
-            _environment.define('index', index, 'final');
+            final previousEnvironment = _currentEnvironment;
+            _currentEnvironment.define('index', index, 'final');
             final result = callFunctionDeclaration(itemBuilder, [index]);
-            _environment = previousEnvironment;
+            _currentEnvironment = previousEnvironment;
             return result;
           },
           itemCount: evaluateNode(itemCount),
@@ -405,10 +466,10 @@ class Evaluator {
       ) =>
         flt.GridView.builder(
           itemBuilder: (context, index) {
-            final previousEnvironment = _environment;
-            _environment.define('index', index, 'final');
+            final previousEnvironment = _currentEnvironment;
+            _currentEnvironment.define('index', index, 'final');
             final result = callFunctionDeclaration(itemBuilder, [index]);
-            _environment = previousEnvironment;
+            _currentEnvironment = previousEnvironment;
             return result;
           },
           itemCount: evaluateNode(itemCount),
@@ -538,23 +599,23 @@ class Evaluator {
 
   dynamic callFunctionDeclaration(
       FunctionDeclaration declaration, List<dynamic> arguments) {
-    Environment functionEnv = Environment(_environment);
+    Environment functionEnv = Environment(_currentEnvironment);
 
     for (int i = 0; i < declaration.parameters.length; i++) {
       functionEnv.define(declaration.parameters[i].lexeme, arguments[i], 'var');
     }
 
-    Environment previousEnv = _environment;
-    _environment = functionEnv;
+    Environment previousEnv = _currentEnvironment;
+    _currentEnvironment = functionEnv;
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
     try {
       return evaluateNode(declaration.body);
     } on ReturnException catch (e) {
-      return e.value; // Handle return value
+      return e.value;
     } finally {
-      _environment = previousEnv;
+      _currentEnvironment = previousEnv;
       _isGlobalScope = wasGlobalScope;
     }
   }
@@ -566,7 +627,7 @@ class Evaluator {
   }
 
   dynamic callFunction(String functionName, List arguments) {
-    final function = _environment.getValue(functionName);
+    final function = _currentEnvironment.getValue(functionName);
     if (function is FunctionDeclaration) {
       return callFunctionDeclaration(function, arguments);
     } else if (function is Function) {
@@ -589,7 +650,21 @@ class Evaluator {
   }
 
   dynamic getVariable(String name) {
-    return _environment.getValue(name);
+    return _currentEnvironment.getValue(name);
+  }
+
+  void defineEnvironmentVariable(String name, dynamic value,
+      {String? environmentId}) {
+    _environments[environmentId]!.define(name, value, 'var');
+  }
+
+  void defineEnvironmentFunction(String name, Function value,
+      {String? environmentId}) {
+    _environments[environmentId]!.define(name, value, 'final');
+  }
+
+  dynamic getEnvironmentVariable(String name, {String? environmentId}) {
+    return _environments[environmentId]!.getValue(name);
   }
 
   flt.IconData _convertIcon(Icons node) {
@@ -919,5 +994,10 @@ class Evaluator {
       return factory(params);
     }
     throw EvaluationError("Unknown custom widget: ${node.name.lexeme}");
+  }
+
+  // Add this method to reset metrics
+  void resetMetrics() {
+    metrics.reset();
   }
 }

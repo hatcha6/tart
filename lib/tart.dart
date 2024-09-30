@@ -62,6 +62,8 @@ class Tart {
   final Lexer lexer;
   final String Function(String filePath)? _importHandler;
 
+  EvaluationMetrics get metrics => evaluator.metrics;
+
   Tart(
       {String Function(String filePath)? importHandler,
       Map<String, Widget Function(Map<String, dynamic> params)>? customWidgets})
@@ -92,8 +94,9 @@ class Tart {
     return evaluator.evaluate(ast);
   }
 
-  (dynamic, BenchmarkResults?) runWithBenchmark(String source) {
-    return _runWithBenchmark(source);
+  (dynamic, BenchmarkResults?) runWithBenchmark(String source,
+      {String? environmentId}) {
+    return _runWithBenchmark(source, environmentId: environmentId);
   }
 
   Future<(dynamic, BenchmarkResults?)> runAsync(String source,
@@ -107,6 +110,31 @@ class Tart {
     }
   }
 
+  String createIsolatedEnvironment() {
+    return evaluator.createIsolatedEnvironment();
+  }
+
+  void setCurrentEnvironment(String id) {
+    evaluator.setCurrentEnvironment(id);
+  }
+
+  void removeEnvironment(String id) {
+    evaluator.removeEnvironment(id);
+  }
+
+  dynamic runInEnvironment(String source, {String? environmentId}) {
+    List<Token> tokens = lexer.scanTokens(source);
+    List<AstNode> ast = parser.parse(tokens);
+    return evaluator.evaluate(ast, environmentId: environmentId);
+  }
+
+  Future<dynamic> runAsyncInEnvironment(String source,
+      {String? environmentId}) async {
+    var tokens = await lexer.scanTokensAsync(source);
+    var nodes = await parser.parseAsync(tokens);
+    return evaluator.evaluate(nodes, environmentId: environmentId);
+  }
+
   void defineGlobalVariable(String name, dynamic value) =>
       evaluator.defineGlobalVariable(name, value);
 
@@ -118,8 +146,22 @@ class Tart {
   dynamic callFunction(String functionName, List arguments) =>
       evaluator.callFunction(functionName, arguments);
 
+  void defineEnvironmentVariable(String name, dynamic value,
+          {String? environmentId}) =>
+      evaluator.defineEnvironmentVariable(name, value,
+          environmentId: environmentId);
+
+  void defineEnvironmentFunction(String name, Function value,
+          {String? environmentId}) =>
+      evaluator.defineEnvironmentFunction(name, value,
+          environmentId: environmentId);
+
+  dynamic getEnvironmentVariable(String name, {String? environmentId}) =>
+      evaluator.getEnvironmentVariable(name, environmentId: environmentId);
+
   // New benchmarking methods
-  (dynamic, BenchmarkResults) _runWithBenchmark(String source) {
+  (dynamic, BenchmarkResults) _runWithBenchmark(String source,
+      {String? environmentId}) {
     int initialMemoryUsage = _getMemoryUsage();
 
     Stopwatch lexerStopwatch = Stopwatch()..start();
@@ -135,7 +177,7 @@ class Tart {
     double nodesPerSecond = nodes.length / parserTime;
 
     Stopwatch evaluatorStopwatch = Stopwatch()..start();
-    final result = evaluator.evaluate(nodes);
+    final result = evaluator.evaluate(nodes, environmentId: environmentId);
     evaluatorStopwatch.stop();
     double evaluatorTime = evaluatorStopwatch.elapsedMicroseconds / 1000000;
 
@@ -246,35 +288,54 @@ class TartStatefulWidget extends StatefulWidget {
 
 class _TartStatefulWidgetState extends State<TartStatefulWidget> {
   late Tart _tart;
+  late String _environmentId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _tart = TartProvider.of(context);
+    _environmentId = _tart.createIsolatedEnvironment();
+    _tart.setCurrentEnvironment(_environmentId);
     if (widget.environment != null) {
       widget.environment!.forEach((key, value) {
         if (value is Function) {
-          _tart.defineGlobalFunction(key, value);
+          _tart.defineEnvironmentFunction(key, value,
+              environmentId: _environmentId);
         } else {
-          _tart.defineGlobalVariable(key, value);
+          _tart.defineEnvironmentVariable(key, value,
+              environmentId: _environmentId);
         }
       });
     }
-    _tart.defineGlobalFunction('setState', (List<dynamic> args) {
+    _tart.defineEnvironmentFunction('setState', (List<dynamic> args) {
       setState(() {});
-    });
+    }, environmentId: _environmentId);
   }
 
   @override
   Widget build(BuildContext context) {
     dynamic result;
+    _tart.setCurrentEnvironment(_environmentId);
     if (widget.printBenchmarks) {
-      final (res, benchmarks) = _tart.runWithBenchmark(widget.source);
+      final (res, benchmarks) = _tart.runWithBenchmark(
+        widget.source,
+        environmentId: _environmentId,
+      );
       print(benchmarks);
+      print(_tart.metrics);
       result = res;
     } else {
-      result = _tart.run(widget.source);
+      result = _tart.runInEnvironment(
+        widget.source,
+        environmentId: _environmentId,
+      );
     }
     return result as Widget;
+  }
+
+  @override
+  void dispose() {
+    _tart.removeEnvironment(_environmentId);
+    super.dispose();
   }
 }

@@ -686,4 +686,55 @@ return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!');
     expect(find.text('Custom Large Button'), findsOneWidget);
     await tester.pumpAndSettle();
   });
+
+  testWidgets('Tart can render a two or more TartStatefulWidgets',
+      (WidgetTester tester) async {
+    const String tartScript = '''
+return flutter::Row(children: [
+  flutter::Text(text: 'Hello'),
+  flutter::Text(text: 'World' + toString(x)),
+  flutter::TextButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: 'Press me' + toString(index))),
+]);''';
+
+    await tester.pumpWidget(
+      tart.TartProvider(
+        tart: interpreter,
+        child: MaterialApp(
+          home: Scaffold(
+            body: ListView(
+              children: const [
+                SizedBox(
+                  height: 500,
+                  child: tart.TartStatefulWidget(
+                    environment: {
+                      'index': 1,
+                      'x': 0,
+                    },
+                    source: tartScript,
+                  ),
+                ),
+                SizedBox(
+                  height: 500,
+                  child: tart.TartStatefulWidget(
+                    environment: {'index': 2, 'x': 0},
+                    source: tartScript,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Hello'), findsAtLeast(2));
+    expect(find.text('World0'), findsAtLeast(2));
+
+    await tester.tap(find.text('Press me1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hello'), findsAtLeast(2));
+    expect(find.text('World1'), findsOneWidget);
+    expect(find.text('World0'), findsOneWidget);
+  });
 }
