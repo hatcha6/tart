@@ -234,9 +234,9 @@ class MaterialApp extends AstWidget {
 }
 
 class Scaffold extends AstWidget {
-  final AstWidget appBar;
-  final AstWidget body;
-  final AstWidget floatingActionButton;
+  final AstWidget? appBar;
+  final AstWidget? body;
+  final AstWidget? floatingActionButton;
 
   const Scaffold(super.name, this.appBar, this.body, this.floatingActionButton);
 }

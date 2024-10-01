@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tart_dev/tart.dart';
+import 'package:tart_dev/ast.dart';
 
 void main() {
   void testParse(String source, Function(List<AstNode>) validator) {

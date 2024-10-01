@@ -328,6 +328,10 @@ class Evaluator {
       TokenType.greaterEqual => left >= right,
       TokenType.and => _isTruthy(left) && _isTruthy(right),
       TokenType.or => _isTruthy(left) || _isTruthy(right),
+      TokenType.plusAssign => left += right,
+      TokenType.minusAssign => left -= right,
+      TokenType.multiplyAssign => left *= right,
+      TokenType.divideAssign => left /= right,
       _ => throw EvaluationError(
           'Unknown binary operator: ${node.operator.lexeme}'),
     };
@@ -563,7 +567,19 @@ class Evaluator {
         flt.SingleChildScrollView(child: _evaluateWidget(child)),
       MaterialApp(home: final child) =>
         flt.MaterialApp(home: _evaluateWidget(child)),
-      Scaffold(body: final body) => flt.Scaffold(body: _evaluateWidget(body)),
+      Scaffold(
+        body: final body,
+        appBar: final appBar,
+        floatingActionButton: final floatingActionButton
+      ) =>
+        flt.Scaffold(
+            body: body != null ? _evaluateWidget(body) : null,
+            appBar: appBar != null
+                ? _evaluateWidget(appBar) as flt.PreferredSizeWidget
+                : null,
+            floatingActionButton: floatingActionButton != null
+                ? _evaluateWidget(floatingActionButton)
+                : null),
       FloatingActionButton(child: final child, onPressed: final onPressed) =>
         flt.FloatingActionButton(
           onPressed: () => callFunctionDeclaration(
@@ -674,6 +690,10 @@ class Evaluator {
       IconsSearch() => flt.Icons.search,
       IconsClear() => flt.Icons.clear,
       IconsClose() => flt.Icons.close,
+      IconsShoppingBag() => flt.Icons.shopping_bag,
+      IconsAttractions() => flt.Icons.attractions,
+      IconsRestaurant() => flt.Icons.restaurant,
+      IconsStar() => flt.Icons.star,
       IconsAdd() => flt.Icons.add,
       IconsRemove() => flt.Icons.remove,
       IconsEdit() => flt.Icons.edit,
@@ -866,10 +886,10 @@ class Evaluator {
 
   flt.EdgeInsets _convertEdgeInsets(EdgeInsets padding) {
     return flt.EdgeInsets.fromLTRB(
-      padding.left != null ? evaluateNode(padding.left!) : 0,
-      padding.top != null ? evaluateNode(padding.top!) : 0,
-      padding.right != null ? evaluateNode(padding.right!) : 0,
-      padding.bottom != null ? evaluateNode(padding.bottom!) : 0,
+      padding.left != null ? evaluateNode(padding.left!).toDouble() : 0,
+      padding.top != null ? evaluateNode(padding.top!).toDouble() : 0,
+      padding.right != null ? evaluateNode(padding.right!).toDouble() : 0,
+      padding.bottom != null ? evaluateNode(padding.bottom!).toDouble() : 0,
     );
   }
 

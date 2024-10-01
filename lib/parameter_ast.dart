@@ -312,3 +312,19 @@ class IconsClear extends Icons {
 class IconsClose extends Icons {
   const IconsClose();
 }
+
+class IconsShoppingBag extends Icons {
+  const IconsShoppingBag();
+}
+
+class IconsAttractions extends Icons {
+  const IconsAttractions();
+}
+
+class IconsRestaurant extends Icons {
+  const IconsRestaurant();
+}
+
+class IconsStar extends Icons {
+  const IconsStar();
+}

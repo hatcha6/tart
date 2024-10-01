@@ -347,6 +347,10 @@ class Parser {
       'IconsSearch': IconsSearch(),
       'IconsClear': IconsClear(),
       'IconsClose': IconsClose(),
+      'IconsShoppingBag': IconsShoppingBag(),
+      'IconsAttractions': IconsAttractions(),
+      'IconsRestaurant': IconsRestaurant(),
+      'IconsStar': IconsStar(),
     };
     final result = iconsMap[name.lexeme];
     if (result == null) {

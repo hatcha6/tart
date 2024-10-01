@@ -5,7 +5,6 @@ library tart;
 export 'lexer.dart';
 export 'token.dart';
 export 'parser.dart';
-export 'ast.dart';
 export 'evaluator.dart';
 
 import 'dart:io';
@@ -15,7 +14,7 @@ import 'evaluator.dart';
 import 'lexer.dart';
 import 'parser.dart';
 import 'token.dart';
-import 'ast.dart';
+import 'ast.dart' as ast;
 
 class BenchmarkResults {
   final double lexerTokensPerSecond;
@@ -79,7 +78,7 @@ class Tart {
     }
   }
 
-  List<AstNode> _handleImport(String filePath) {
+  List<ast.AstNode> _handleImport(String filePath) {
     if (_importHandler == null) {
       throw Exception('importHandler is required fro imports');
     }
@@ -89,8 +88,8 @@ class Tart {
   }
 
   dynamic run(String source) {
-    List<Token> tokens = _lexer.scanTokens(source);
-    List<AstNode> ast = _parser.parse(tokens);
+    final tokens = _lexer.scanTokens(source);
+    final ast = _parser.parse(tokens);
     return evaluator.evaluate(ast);
   }
 
@@ -124,7 +123,7 @@ class Tart {
 
   dynamic runInEnvironment(String source, {String? environmentId}) {
     List<Token> tokens = lexer.scanTokens(source);
-    List<AstNode> ast = parser.parse(tokens);
+    final ast = parser.parse(tokens);
     return evaluator.evaluate(ast, environmentId: environmentId);
   }
 
@@ -165,13 +164,13 @@ class Tart {
     int initialMemoryUsage = _getMemoryUsage();
 
     Stopwatch lexerStopwatch = Stopwatch()..start();
-    List<Token> tokens = _lexer.scanTokens(source);
+    final tokens = _lexer.scanTokens(source);
     lexerStopwatch.stop();
     double lexerTime = lexerStopwatch.elapsedMicroseconds / 1000000;
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    List<AstNode> nodes = _parser.parse(tokens);
+    final nodes = _parser.parse(tokens);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -205,13 +204,13 @@ class Tart {
     int initialMemoryUsage = _getMemoryUsage();
 
     Stopwatch lexerStopwatch = Stopwatch()..start();
-    List<Token> tokens = await _lexer.scanTokensAsync(source);
+    final tokens = await _lexer.scanTokensAsync(source);
     lexerStopwatch.stop();
     double lexerTime = lexerStopwatch.elapsedMicroseconds / 1000000;
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    List<AstNode> nodes = await _parser.parseAsync(tokens);
+    final nodes = await _parser.parseAsync(tokens);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -288,14 +287,29 @@ class TartStatefulWidget extends StatefulWidget {
 
 class _TartStatefulWidgetState extends State<TartStatefulWidget> {
   late Tart _tart;
-  late String _environmentId;
+  String? _environmentId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _tart = TartProvider.of(context);
+    updateEnvironment();
+  }
+
+  @override
+  void didUpdateWidget(TartStatefulWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.environment != oldWidget.environment) {
+      updateEnvironment();
+    }
+  }
+
+  void updateEnvironment() {
+    if (_environmentId != null) {
+      _tart.removeEnvironment(_environmentId!);
+    }
     _environmentId = _tart.createIsolatedEnvironment();
-    _tart.setCurrentEnvironment(_environmentId);
+    _tart.setCurrentEnvironment(_environmentId!);
     if (widget.environment != null) {
       widget.environment!.forEach((key, value) {
         if (value is Function) {
@@ -314,8 +328,13 @@ class _TartStatefulWidgetState extends State<TartStatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure _tart and _environmentId are initialized
+    if (_environmentId == null) {
+      return const SizedBox.shrink();
+    }
+
     dynamic result;
-    _tart.setCurrentEnvironment(_environmentId);
+    _tart.setCurrentEnvironment(_environmentId!);
     if (widget.printBenchmarks) {
       final (res, benchmarks) = _tart.runWithBenchmark(
         widget.source,
@@ -335,7 +354,9 @@ class _TartStatefulWidgetState extends State<TartStatefulWidget> {
 
   @override
   void dispose() {
-    _tart.removeEnvironment(_environmentId);
+    if (_environmentId != null) {
+      _tart.removeEnvironment(_environmentId!);
+    }
     super.dispose();
   }
 }

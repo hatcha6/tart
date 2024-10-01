@@ -1,0 +1,19 @@
+function increase() {
+    counter = counter + 1;
+    setState();
+}
+
+return f:Scaffold(
+    appBar: f:AppBar(
+        title: f:Text(text: 'Counter'),
+    ),
+    body: f:Center(
+        child: f:Text(text: 'You pressed the button: ' + toString(counter) + ' times'),
+    ),
+    floatingActionButton: f:FloatingActionButton(
+      onPressed: () {
+        increase();
+      },
+      child: f:Icon(icon: p:IconsAdd())
+    )
+);
