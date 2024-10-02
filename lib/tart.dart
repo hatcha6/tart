@@ -9,6 +9,7 @@ export 'evaluator.dart';
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 
 import 'evaluator.dart';
 import 'lexer.dart';
@@ -84,12 +85,12 @@ class Tart {
     }
     final contents = _importHandler(filePath);
     final tokens = lexer.scanTokens(contents);
-    return parser.parse(tokens);
+    return parser.parse(tokens, contents);
   }
 
   dynamic run(String source) {
     final tokens = _lexer.scanTokens(source);
-    final ast = _parser.parse(tokens);
+    final ast = _parser.parse(tokens, source);
     return evaluator.evaluate(ast);
   }
 
@@ -104,7 +105,7 @@ class Tart {
       return _runWithBenchmarkAsync(source);
     } else {
       var tokens = await lexer.scanTokensAsync(source);
-      var nodes = await parser.parseAsync(tokens);
+      var nodes = await parser.parseAsync(tokens, source);
       return (evaluator.evaluate(nodes), null);
     }
   }
@@ -123,14 +124,14 @@ class Tart {
 
   dynamic runInEnvironment(String source, {String? environmentId}) {
     List<Token> tokens = lexer.scanTokens(source);
-    final ast = parser.parse(tokens);
+    final ast = parser.parse(tokens, source);
     return evaluator.evaluate(ast, environmentId: environmentId);
   }
 
   Future<dynamic> runAsyncInEnvironment(String source,
       {String? environmentId}) async {
     var tokens = await lexer.scanTokensAsync(source);
-    var nodes = await parser.parseAsync(tokens);
+    var nodes = await parser.parseAsync(tokens, source);
     return evaluator.evaluate(nodes, environmentId: environmentId);
   }
 
@@ -170,7 +171,7 @@ class Tart {
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    final nodes = _parser.parse(tokens);
+    final nodes = _parser.parse(tokens, source);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -210,7 +211,7 @@ class Tart {
     double tokensPerSecond = tokens.length / lexerTime;
 
     Stopwatch parserStopwatch = Stopwatch()..start();
-    final nodes = await _parser.parseAsync(tokens);
+    final nodes = await _parser.parseAsync(tokens, source);
     parserStopwatch.stop();
     double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
     double nodesPerSecond = nodes.length / parserTime;
@@ -288,27 +289,45 @@ class TartStatefulWidget extends StatefulWidget {
 class _TartStatefulWidgetState extends State<TartStatefulWidget> {
   late Tart _tart;
   String? _environmentId;
+  late Widget _widget;
+  String _lastSource = '';
+  Map<String, dynamic>? _lastEnvironment;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _tart = TartProvider.of(context);
-    updateEnvironment();
+    _initializeEnvironment();
+  }
+
+  bool mapEquals<K, V>(Map<K, V>? map1, Map<K, V>? map2) {
+    if (identical(map1, map2)) return true;
+    if (map1 == null || map2 == null) return false;
+    if (map1.length != map2.length) return false;
+    for (final key in map1.keys) {
+      if (!map2.containsKey(key) || map2[key] != map1[key]) return false;
+    }
+    return true;
   }
 
   @override
   void didUpdateWidget(TartStatefulWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.environment != oldWidget.environment) {
-      updateEnvironment();
+    if (!mapEquals(widget.environment, _lastEnvironment)) {
+      _updateEnvironment();
+    }
+    if (widget.source != _lastSource) {
+      _buildWidget();
     }
   }
 
-  void updateEnvironment() {
-    if (_environmentId != null) {
-      _tart.removeEnvironment(_environmentId!);
-    }
+  void _initializeEnvironment() {
     _environmentId = _tart.createIsolatedEnvironment();
+    _updateEnvironment();
+    _buildWidget();
+  }
+
+  void _updateEnvironment() {
     _tart.setCurrentEnvironment(_environmentId!);
     if (widget.environment != null) {
       widget.environment!.forEach((key, value) {
@@ -322,19 +341,19 @@ class _TartStatefulWidgetState extends State<TartStatefulWidget> {
       });
     }
     _tart.defineEnvironmentFunction('setState', (List<dynamic> args) {
-      setState(() {});
+      _buildWidget();
     }, environmentId: _environmentId);
+    _lastEnvironment = Map.from(widget.environment ?? {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Ensure _tart and _environmentId are initialized
+  void _buildWidget() {
     if (_environmentId == null) {
-      return const SizedBox.shrink();
+      _widget = const SizedBox.shrink();
+      return;
     }
 
-    dynamic result;
     _tart.setCurrentEnvironment(_environmentId!);
+    dynamic result;
     if (widget.printBenchmarks) {
       final (res, benchmarks) = _tart.runWithBenchmark(
         widget.source,
@@ -349,8 +368,14 @@ class _TartStatefulWidgetState extends State<TartStatefulWidget> {
         environmentId: _environmentId,
       );
     }
-    return result as Widget;
+    setState(() {
+      _widget = result as Widget;
+      _lastSource = widget.source;
+    });
   }
+
+  @override
+  Widget build(BuildContext context) => _widget;
 
   @override
   void dispose() {
@@ -358,5 +383,24 @@ class _TartStatefulWidgetState extends State<TartStatefulWidget> {
       _tart.removeEnvironment(_environmentId!);
     }
     super.dispose();
+  }
+}
+
+class TartBuilder extends StatelessWidget {
+  final List<TartStatefulWidget> tartWidgets;
+  final Widget Function(BuildContext context, List<Widget> tartWidgets) builder;
+
+  const TartBuilder({
+    super.key,
+    required this.tartWidgets,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return builder(
+      context,
+      tartWidgets,
+    );
   }
 }

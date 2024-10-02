@@ -8,7 +8,7 @@ void main() {
       final lexer = Lexer();
       final tokens = lexer.scanTokens(source);
       final parser = Parser();
-      final ast = parser.parse(tokens);
+      final ast = parser.parse(tokens, source);
       validator(ast);
     });
   }

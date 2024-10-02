@@ -3,6 +3,7 @@ library tart;
 import 'dart:collection';
 import 'token.dart';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 class Lexer {
   String source = '';
@@ -10,7 +11,8 @@ class Lexer {
   int start = 0;
   int current = 0;
   int line = 1;
-  final StringBuffer _lexemeBuffer = StringBuffer();
+  Uint8List _stringBuffer = Uint8List(1024); // Preallocate 1KB
+  int _stringBufferIndex = 0;
 
   static final Map<String, TokenType> keywords = {
     'flutter::': TokenType.flutterWidget,
@@ -50,7 +52,8 @@ class Lexer {
     'import': TokenType.tartImport,
   };
 
-  static final Map<String, Token> _tokenCache = HashMap();
+  static const int _maxCacheSize = 1000; // Adjust as needed
+  static final LinkedHashMap<String, Token> _tokenCache = LinkedHashMap();
 
   Lexer();
 
@@ -60,7 +63,8 @@ class Lexer {
     start = 0;
     current = 0;
     line = 1;
-    _lexemeBuffer.clear();
+    _stringBufferIndex = 0;
+    _stringBuffer.setAll(0, Uint8List(1024));
   }
 
   List<Token> scanTokens(String source) {
@@ -76,7 +80,7 @@ class Lexer {
       scanToken();
     }
 
-    tokens.add(_getCachedToken(TokenType.eof, "", null, line));
+    tokens.add(_getCachedToken(TokenType.eof, "", null, line, source.length));
     return tokens;
   }
 
@@ -139,6 +143,7 @@ class Lexer {
       token.lexeme,
       token.literal,
       _adjustLineNumber(token.line, offset),
+      token.column,
     );
   }
 
@@ -320,10 +325,18 @@ class Lexer {
   }
 
   void string(String quote) {
-    _lexemeBuffer.clear();
+    _stringBufferIndex = 0;
     while (peek() != quote && !isAtEnd()) {
       if (peek() == '\n') line++;
-      _lexemeBuffer.write(advance());
+      int charCode = advance().codeUnitAt(0);
+
+      if (_stringBufferIndex >= _stringBuffer.length) {
+        Uint8List newBuffer = Uint8List(_stringBuffer.length * 2);
+        newBuffer.setRange(0, _stringBuffer.length, _stringBuffer);
+        _stringBuffer = newBuffer;
+      }
+
+      _stringBuffer[_stringBufferIndex++] = charCode;
     }
 
     if (isAtEnd()) {
@@ -333,7 +346,8 @@ class Lexer {
 
     advance(); // The closing quote
 
-    addToken(TokenType.string, _lexemeBuffer.toString());
+    String result = String.fromCharCodes(_stringBuffer, 0, _stringBufferIndex);
+    addToken(TokenType.string, result);
   }
 
   bool match(String expected) {
@@ -379,13 +393,30 @@ class Lexer {
 
   void addToken(TokenType type, [Object? literal]) {
     String text = source.substring(start, current);
-    tokens.add(_getCachedToken(type, text, literal, line));
+    int column = start - source.lastIndexOf('\n', start);
+    tokens.add(_getCachedToken(type, text, literal, line, column));
   }
 
   Token _getCachedToken(
-      TokenType type, String lexeme, Object? literal, int line) {
-    String key = '$type:$lexeme:$literal:$line';
-    return _tokenCache.putIfAbsent(
-        key, () => Token(type, lexeme, literal, line));
+      TokenType type, String lexeme, Object? literal, int line, int column) {
+    String key = '$type:$lexeme:$literal:$line:$column';
+    Token? token = _tokenCache[key];
+
+    if (token != null) {
+      // Move the accessed token to the end (most recently used)
+      _tokenCache.remove(key);
+      _tokenCache[key] = token;
+      return token;
+    }
+
+    token = Token(type, lexeme, literal, line, column);
+
+    if (_tokenCache.length >= _maxCacheSize) {
+      // Remove the least recently used item (first item)
+      _tokenCache.remove(_tokenCache.keys.first);
+    }
+
+    _tokenCache[key] = token;
+    return token;
   }
 }

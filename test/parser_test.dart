@@ -13,14 +13,14 @@ void main() {
   group('Parser', () {
     test('parses variable declarations', () {
       final tokens = [
-        const Token(TokenType.tartVar, 'var', null, 1),
-        const Token(TokenType.identifier, 'x', null, 1),
-        const Token(TokenType.assign, '=', null, 1),
-        const Token(TokenType.integer, '42', 42, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartVar, 'var', null, 1, 1),
+        const Token(TokenType.identifier, 'x', null, 1, 1),
+        const Token(TokenType.assign, '=', null, 1, 1),
+        const Token(TokenType.integer, '42', 42, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -33,15 +33,15 @@ void main() {
 
     test('parses function declarations', () {
       final tokens = [
-        const Token(TokenType.tartFunction, 'function', null, 1),
-        const Token(TokenType.identifier, 'foo', null, 1),
-        const Token(TokenType.leftParen, '(', null, 1),
-        const Token(TokenType.rightParen, ')', null, 1),
-        const Token(TokenType.leftBrace, '{', null, 1),
-        const Token(TokenType.rightBrace, '}', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartFunction, 'function', null, 1, 1),
+        const Token(TokenType.identifier, 'foo', null, 1, 1),
+        const Token(TokenType.leftParen, '(', null, 1, 1),
+        const Token(TokenType.rightParen, ')', null, 1, 1),
+        const Token(TokenType.leftBrace, '{', null, 1, 1),
+        const Token(TokenType.rightBrace, '}', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -54,13 +54,13 @@ void main() {
 
     test('parses anonymous function declarations', () {
       final tokens = [
-        const Token(TokenType.leftParen, '(', null, 1),
-        const Token(TokenType.rightParen, ')', null, 1),
-        const Token(TokenType.leftBrace, '{', null, 1),
-        const Token(TokenType.rightBrace, '}', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.leftParen, '(', null, 1, 1),
+        const Token(TokenType.rightParen, ')', null, 1, 1),
+        const Token(TokenType.leftBrace, '{', null, 1, 1),
+        const Token(TokenType.rightBrace, '}', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -72,15 +72,15 @@ void main() {
 
     test('parses if statements', () {
       final tokens = [
-        const Token(TokenType.tartIf, 'if', null, 1),
-        const Token(TokenType.leftParen, '(', null, 1),
-        const Token(TokenType.boolean, 'true', true, 1),
-        const Token(TokenType.rightParen, ')', null, 1),
-        const Token(TokenType.leftBrace, '{', null, 1),
-        const Token(TokenType.rightBrace, '}', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartIf, 'if', null, 1, 1),
+        const Token(TokenType.leftParen, '(', null, 1, 1),
+        const Token(TokenType.boolean, 'true', true, 1, 1),
+        const Token(TokenType.rightParen, ')', null, 1, 1),
+        const Token(TokenType.leftBrace, '{', null, 1, 1),
+        const Token(TokenType.rightBrace, '}', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -95,15 +95,15 @@ void main() {
 
     test('parses while statements', () {
       final tokens = [
-        const Token(TokenType.tartWhile, 'while', null, 1),
-        const Token(TokenType.leftParen, '(', null, 1),
-        const Token(TokenType.boolean, 'true', true, 1),
-        const Token(TokenType.rightParen, ')', null, 1),
-        const Token(TokenType.leftBrace, '{', null, 1),
-        const Token(TokenType.rightBrace, '}', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartWhile, 'while', null, 1, 1),
+        const Token(TokenType.leftParen, '(', null, 1, 1),
+        const Token(TokenType.boolean, 'true', true, 1, 1),
+        const Token(TokenType.rightParen, ')', null, 1, 1),
+        const Token(TokenType.leftBrace, '{', null, 1, 1),
+        const Token(TokenType.rightBrace, '}', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -117,25 +117,25 @@ void main() {
 
     test('parses for statements', () {
       final tokens = [
-        const Token(TokenType.tartFor, 'for', null, 1),
-        const Token(TokenType.leftParen, '(', null, 1),
-        const Token(TokenType.tartVar, 'var', null, 1),
-        const Token(TokenType.identifier, 'i', null, 1),
-        const Token(TokenType.assign, '=', null, 1),
-        const Token(TokenType.integer, '0', 0, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.identifier, 'i', null, 1),
-        const Token(TokenType.less, '<', null, 1),
-        const Token(TokenType.integer, '10', 10, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.identifier, 'i', null, 1),
-        const Token(TokenType.plusPlus, '++', null, 1),
-        const Token(TokenType.rightParen, ')', null, 1),
-        const Token(TokenType.leftBrace, '{', null, 1),
-        const Token(TokenType.rightBrace, '}', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartFor, 'for', null, 1, 1),
+        const Token(TokenType.leftParen, '(', null, 1, 1),
+        const Token(TokenType.tartVar, 'var', null, 1, 1),
+        const Token(TokenType.identifier, 'i', null, 1, 1),
+        const Token(TokenType.assign, '=', null, 1, 1),
+        const Token(TokenType.integer, '0', 0, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.identifier, 'i', null, 1, 1),
+        const Token(TokenType.less, '<', null, 1, 1),
+        const Token(TokenType.integer, '10', 10, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.identifier, 'i', null, 1, 1),
+        const Token(TokenType.plusPlus, '++', null, 1, 1),
+        const Token(TokenType.rightParen, ')', null, 1, 1),
+        const Token(TokenType.leftBrace, '{', null, 1, 1),
+        const Token(TokenType.rightBrace, '}', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -150,12 +150,12 @@ void main() {
 
     test('parses return statements', () {
       final tokens = [
-        const Token(TokenType.tartReturn, 'return', null, 1),
-        const Token(TokenType.integer, '42', 42, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.tartReturn, 'return', null, 1, 1),
+        const Token(TokenType.integer, '42', 42, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -167,13 +167,13 @@ void main() {
 
     test('parses expression statements', () {
       final tokens = [
-        const Token(TokenType.identifier, 'x', null, 1),
-        const Token(TokenType.assign, '=', null, 1),
-        const Token(TokenType.integer, '42', 42, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.identifier, 'x', null, 1, 1),
+        const Token(TokenType.assign, '=', null, 1, 1),
+        const Token(TokenType.integer, '42', 42, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result, isA<List<AstNode>>());
       expect(result.length, 1);
@@ -184,13 +184,13 @@ void main() {
 
     test('parses member access', () {
       final tokens = [
-        const Token(TokenType.identifier, 'obj', null, 1),
-        const Token(TokenType.dot, '.', null, 1),
-        const Token(TokenType.identifier, 'property', null, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.identifier, 'obj', null, 1, 1),
+        const Token(TokenType.dot, '.', null, 1, 1),
+        const Token(TokenType.identifier, 'property', null, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result.length, 1);
       expect(result[0], isA<ExpressionStatement>());
@@ -203,14 +203,14 @@ void main() {
 
     test('parses index access', () {
       final tokens = [
-        const Token(TokenType.identifier, 'arr', null, 1),
-        const Token(TokenType.leftBracket, '[', null, 1),
-        const Token(TokenType.integer, '0', 0, 1),
-        const Token(TokenType.rightBracket, ']', null, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.identifier, 'arr', null, 1, 1),
+        const Token(TokenType.leftBracket, '[', null, 1, 1),
+        const Token(TokenType.integer, '0', 0, 1, 1),
+        const Token(TokenType.rightBracket, ']', null, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result.length, 1);
       expect(result[0], isA<ExpressionStatement>());
@@ -223,17 +223,17 @@ void main() {
 
     test('parses list literal', () {
       final tokens = [
-        const Token(TokenType.leftBracket, '[', null, 1),
-        const Token(TokenType.integer, '1', 1, 1),
-        const Token(TokenType.comma, ',', null, 1),
-        const Token(TokenType.integer, '2', 2, 1),
-        const Token(TokenType.comma, ',', null, 1),
-        const Token(TokenType.integer, '3', 3, 1),
-        const Token(TokenType.rightBracket, ']', null, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.leftBracket, '[', null, 1, 1),
+        const Token(TokenType.integer, '1', 1, 1, 1),
+        const Token(TokenType.comma, ',', null, 1, 1),
+        const Token(TokenType.integer, '2', 2, 1, 1),
+        const Token(TokenType.comma, ',', null, 1, 1),
+        const Token(TokenType.integer, '3', 3, 1, 1),
+        const Token(TokenType.rightBracket, ']', null, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result.length, 1);
       expect(result[0], isA<ExpressionStatement>());
@@ -246,13 +246,13 @@ void main() {
 
     test('parses length access', () {
       final tokens = [
-        const Token(TokenType.identifier, 'list', null, 1),
-        const Token(TokenType.dot, '.', null, 1),
-        const Token(TokenType.identifier, 'length', null, 1),
-        const Token(TokenType.semicolon, ';', null, 1),
-        const Token(TokenType.eof, '', null, 1),
+        const Token(TokenType.identifier, 'list', null, 1, 1),
+        const Token(TokenType.dot, '.', null, 1, 1),
+        const Token(TokenType.identifier, 'length', null, 1, 1),
+        const Token(TokenType.semicolon, ';', null, 1, 1),
+        const Token(TokenType.eof, '', null, 1, 1),
       ];
-      final result = parser.parse(tokens);
+      final result = parser.parse(tokens, '');
 
       expect(result.length, 1);
       expect(result[0], isA<ExpressionStatement>());

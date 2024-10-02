@@ -109,6 +109,7 @@ void main() {
       '"Hello"',
       'Hello',
       1,
+      1,
     );
     expect(tokenWithLiteral.toString(),
         'Token(type: TokenType.string, lexeme: ""Hello"" (Hello), line: 1)');
@@ -118,6 +119,7 @@ void main() {
       '',
       null,
       2,
+      1,
     );
     expect(tokenWithoutLiteral.toString(),
         'Token(type: TokenType.eof, lexeme: "", line: 2)');

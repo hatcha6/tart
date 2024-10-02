@@ -17,16 +17,14 @@ part of 'ast.dart';
 /// }
 /// ```
 sealed class AstWidget extends AstNode {
-  final Token name;
-
-  const AstWidget(this.name);
+  const AstWidget(super.tartType);
 }
 
 class Text extends AstWidget {
   final AstNode text;
   final TextStyle? style;
 
-  const Text(super.name, this.text, [this.style]);
+  const Text(this.text, [this.style]) : super('Text');
 }
 
 class Column extends AstWidget {
@@ -35,11 +33,10 @@ class Column extends AstWidget {
   final AstNode children;
 
   const Column(
-    super.name,
     this.children, [
     this.mainAxisAlignment,
     this.crossAxisAlignment,
-  ]);
+  ]) : super('Column');
 }
 
 class Row extends AstWidget {
@@ -48,11 +45,10 @@ class Row extends AstWidget {
   final AstNode children;
 
   const Row(
-    super.name,
     this.children, [
     this.mainAxisAlignment,
     this.crossAxisAlignment,
-  ]);
+  ]) : super('Row');
 }
 
 class Container extends AstWidget {
@@ -61,27 +57,27 @@ class Container extends AstWidget {
   final AstNode? color;
   final AstWidget? child;
 
-  const Container(super.name,
-      [this.child, this.width, this.height, this.color]);
+  const Container([this.child, this.width, this.height, this.color])
+      : super('Container');
 }
 
 class Image extends AstWidget {
   final AstNode url;
 
-  const Image(super.name, this.url);
+  const Image(this.url) : super('Image');
 }
 
 class Padding extends AstWidget {
   final EdgeInsets padding;
   final AstWidget child;
 
-  const Padding(super.name, this.padding, this.child);
+  const Padding(this.padding, this.child) : super('Padding');
 }
 
 class Center extends AstWidget {
   final AstWidget child;
 
-  const Center(super.name, this.child);
+  const Center(this.child) : super('Center');
 }
 
 class SizedBox extends AstWidget {
@@ -89,28 +85,28 @@ class SizedBox extends AstWidget {
   final AstNode? height;
   final AstWidget? child;
 
-  const SizedBox(super.name, {this.width, this.height, this.child});
+  const SizedBox({this.width, this.height, this.child}) : super('SizedBox');
 }
 
 class Expanded extends AstWidget {
   final AstNode? flex;
   final AstWidget child;
 
-  const Expanded(super.name, this.child, [this.flex]);
+  const Expanded(this.child, [this.flex]) : super('Expanded');
 }
 
 class ElevatedButton extends AstWidget {
   final AstWidget child;
   final FunctionDeclaration onPressed;
 
-  const ElevatedButton(super.name, this.child, this.onPressed);
+  const ElevatedButton(this.child, this.onPressed) : super('ElevatedButton');
 }
 
 class Card extends AstWidget {
   final AstWidget child;
   final AstNode? elevation;
 
-  const Card(super.name, this.child, [this.elevation]);
+  const Card(this.child, [this.elevation]) : super('Card');
 }
 
 class ListView extends AstWidget {
@@ -118,7 +114,8 @@ class ListView extends AstWidget {
   final AstNode? shrinkWrap;
   final AstNode? physics;
 
-  const ListView(super.name, this.children, [this.shrinkWrap, this.physics]);
+  const ListView(this.children, [this.shrinkWrap, this.physics])
+      : super('ListView');
 }
 
 class GridView extends AstWidget {
@@ -127,8 +124,9 @@ class GridView extends AstWidget {
   final AstNode? shrinkWrap;
   final AstNode? physics;
 
-  const GridView(super.name, this.children, this.maxCrossAxisExtent,
-      [this.shrinkWrap, this.physics]);
+  const GridView(this.children, this.maxCrossAxisExtent,
+      [this.shrinkWrap, this.physics])
+      : super('GridView');
 }
 
 class ListViewBuilder extends AstWidget {
@@ -137,8 +135,9 @@ class ListViewBuilder extends AstWidget {
   final AstNode? shrinkWrap;
   final AstNode? physics;
 
-  const ListViewBuilder(super.name, this.itemBuilder, this.itemCount,
-      [this.shrinkWrap, this.physics]);
+  const ListViewBuilder(this.itemBuilder, this.itemCount,
+      [this.shrinkWrap, this.physics])
+      : super('ListViewBuilder');
 }
 
 class GridViewBuilder extends AstWidget {
@@ -149,13 +148,12 @@ class GridViewBuilder extends AstWidget {
   final AstNode? physics;
 
   const GridViewBuilder(
-    super.name,
     this.itemBuilder,
     this.itemCount,
     this.maxCrossAxisExtent,
     this.shrinkWrap,
     this.physics,
-  );
+  ) : super('GridViewBuilder');
 }
 
 class TextField extends AstWidget {
@@ -163,8 +161,8 @@ class TextField extends AstWidget {
   final FunctionDeclaration? onSubmitted;
   final FunctionDeclaration? onChanged;
 
-  const TextField(super.name,
-      [this.decoration, this.onSubmitted, this.onChanged]);
+  const TextField([this.decoration, this.onSubmitted, this.onChanged])
+      : super('TextField');
 }
 
 class ListTile extends AstWidget {
@@ -174,63 +172,66 @@ class ListTile extends AstWidget {
   final AstNode? trailing;
   final FunctionDeclaration? onTap;
 
-  const ListTile(super.name,
-      [this.leading, this.title, this.subtitle, this.trailing, this.onTap]);
+  const ListTile(
+      [this.leading, this.title, this.subtitle, this.trailing, this.onTap])
+      : super('ListTile');
 }
 
 class Stack extends AstWidget {
   final AstNode children;
   final AstNode? alignment;
 
-  const Stack(super.name, this.children, [this.alignment]);
+  const Stack(this.children, [this.alignment]) : super('Stack');
 }
 
 class TextButton extends AstWidget {
   final AstWidget child;
   final FunctionDeclaration onPressed;
 
-  const TextButton(super.name, this.child, this.onPressed);
+  const TextButton(this.child, this.onPressed) : super('TextButton');
 }
 
 class OutlinedButton extends AstWidget {
   final AstWidget child;
   final FunctionDeclaration onPressed;
 
-  const OutlinedButton(super.name, this.child, this.onPressed);
+  const OutlinedButton(this.child, this.onPressed) : super('OutlinedButton');
 }
 
 class LinearProgressIndicator extends AstWidget {
   final AstNode? value;
   final AstNode? backgroundColor;
   final AstNode? color;
-  const LinearProgressIndicator(super.name,
-      [this.value, this.backgroundColor, this.color]);
+  const LinearProgressIndicator([this.value, this.backgroundColor, this.color])
+      : super('LinearProgressIndicator');
 }
 
 class CircularProgressIndicator extends AstWidget {
   final AstNode? value;
   final AstNode? backgroundColor;
   final AstNode? color;
-  const CircularProgressIndicator(super.name,
-      [this.value, this.backgroundColor, this.color]);
+  const CircularProgressIndicator(
+      [this.value, this.backgroundColor, this.color])
+      : super('CircularProgressIndicator');
 }
 
 class CustomAstWidget extends AstWidget {
+  final Token name;
   final Map<String, AstNode> params;
 
-  const CustomAstWidget(super.name, this.params);
+  const CustomAstWidget(this.name, this.params) : super('CustomAstWidget');
 }
 
 class SingleChildScrollView extends AstWidget {
   final AstWidget child;
 
-  const SingleChildScrollView(super.name, this.child);
+  const SingleChildScrollView(this.child) : super('SingleChildScrollView');
 }
 
 class MaterialApp extends AstWidget {
   final AstWidget home;
 
-  const MaterialApp(super.name, this.home);
+  const MaterialApp(this.home) : super('MaterialApp');
 }
 
 class Scaffold extends AstWidget {
@@ -238,14 +239,16 @@ class Scaffold extends AstWidget {
   final AstWidget? body;
   final AstWidget? floatingActionButton;
 
-  const Scaffold(super.name, this.appBar, this.body, this.floatingActionButton);
+  const Scaffold(this.appBar, this.body, this.floatingActionButton)
+      : super('Scaffold');
 }
 
 class FloatingActionButton extends AstWidget {
   final AstWidget child;
   final FunctionDeclaration onPressed;
 
-  const FloatingActionButton(super.name, this.child, this.onPressed);
+  const FloatingActionButton(this.child, this.onPressed)
+      : super('FloatingActionButton');
 }
 
 class AppBar extends AstWidget {
@@ -253,13 +256,13 @@ class AppBar extends AstWidget {
   final AstNode? leading;
   final AstNode? actions;
 
-  const AppBar(super.name, this.title, [this.leading, this.actions]);
+  const AppBar(this.title, [this.leading, this.actions]) : super('AppBar');
 }
 
 class Icon extends AstWidget {
   final AstNode icon;
 
-  const Icon(super.name, this.icon);
+  const Icon(this.icon) : super('Icon');
 }
 
 class Positioned extends AstWidget {
@@ -269,6 +272,6 @@ class Positioned extends AstWidget {
   final AstNode? bottom;
   final AstWidget? child;
 
-  const Positioned(super.name,
-      [this.left, this.top, this.right, this.bottom, this.child]);
+  const Positioned([this.left, this.top, this.right, this.bottom, this.child])
+      : super('Positioned');
 }

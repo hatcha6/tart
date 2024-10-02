@@ -1,111 +1,121 @@
 part of 'ast.dart';
 
-class EdgeInsets extends AstNode {
+class AstParameter extends AstNode {
+  const AstParameter(super.tartType);
+}
+
+class EdgeInsets extends AstParameter {
   final AstNode? top;
   final AstNode? right;
   final AstNode? bottom;
   final AstNode? left;
 
-  const EdgeInsets(this.top, this.right, this.bottom, this.left);
+  const EdgeInsets(
+      super.tartType, this.top, this.right, this.bottom, this.left);
 }
 
 class EdgeInsetsAll extends EdgeInsets {
-  EdgeInsetsAll(AstNode value) : super(value, value, value, value);
+  const EdgeInsetsAll(AstNode value)
+      : super('EdgeInsetsAll', value, value, value, value);
 }
 
 class EdgeInsetsSymmetric extends EdgeInsets {
-  EdgeInsetsSymmetric(AstNode? horizontal, AstNode? vertical)
-      : super(vertical, horizontal, vertical, horizontal);
+  const EdgeInsetsSymmetric(AstNode? horizontal, AstNode? vertical)
+      : super(
+            'EdgeInsetsSymmetric', vertical, horizontal, vertical, horizontal);
 }
 
 class EdgeInsetsOnly extends EdgeInsets {
-  const EdgeInsetsOnly(super.top, super.right, super.bottom, super.left);
+  const EdgeInsetsOnly(
+      AstNode? top, AstNode? right, AstNode? bottom, AstNode? left)
+      : super('EdgeInsetsOnly', top, right, bottom, left);
 }
 
-class MainAxisAlignment extends AstNode {
-  const MainAxisAlignment();
+class MainAxisAlignment extends AstParameter {
+  const MainAxisAlignment(super.tartType);
 }
 
 class MainAxisAlignmentStart extends MainAxisAlignment {
-  const MainAxisAlignmentStart();
+  const MainAxisAlignmentStart() : super('MainAxisAlignmentStart');
 }
 
 class MainAxisAlignmentCenter extends MainAxisAlignment {
-  const MainAxisAlignmentCenter();
+  const MainAxisAlignmentCenter() : super('MainAxisAlignmentCenter');
 }
 
 class MainAxisAlignmentEnd extends MainAxisAlignment {
-  const MainAxisAlignmentEnd();
+  const MainAxisAlignmentEnd() : super('MainAxisAlignmentEnd');
 }
 
 class MainAxisAlignmentSpaceBetween extends MainAxisAlignment {
-  const MainAxisAlignmentSpaceBetween();
+  const MainAxisAlignmentSpaceBetween()
+      : super('MainAxisAlignmentSpaceBetween');
 }
 
 class MainAxisAlignmentSpaceAround extends MainAxisAlignment {
-  const MainAxisAlignmentSpaceAround();
+  const MainAxisAlignmentSpaceAround() : super('MainAxisAlignmentSpaceAround');
 }
 
 class MainAxisAlignmentSpaceEvenly extends MainAxisAlignment {
-  const MainAxisAlignmentSpaceEvenly();
+  const MainAxisAlignmentSpaceEvenly() : super('MainAxisAlignmentSpaceEvenly');
 }
 
-class CrossAxisAlignment extends AstNode {
-  const CrossAxisAlignment();
+class CrossAxisAlignment extends AstParameter {
+  const CrossAxisAlignment(super.tartType);
 }
 
 class CrossAxisAlignmentStart extends CrossAxisAlignment {
-  const CrossAxisAlignmentStart();
+  const CrossAxisAlignmentStart() : super('CrossAxisAlignmentStart');
 }
 
 class CrossAxisAlignmentCenter extends CrossAxisAlignment {
-  const CrossAxisAlignmentCenter();
+  const CrossAxisAlignmentCenter() : super('CrossAxisAlignmentCenter');
 }
 
 class CrossAxisAlignmentEnd extends CrossAxisAlignment {
-  const CrossAxisAlignmentEnd();
+  const CrossAxisAlignmentEnd() : super('CrossAxisAlignmentEnd');
 }
 
 class CrossAxisAlignmentStretch extends CrossAxisAlignment {
-  const CrossAxisAlignmentStretch();
+  const CrossAxisAlignmentStretch() : super('CrossAxisAlignmentStretch');
 }
 
 class CrossAxisAlignmentBaseline extends CrossAxisAlignment {
-  const CrossAxisAlignmentBaseline();
+  const CrossAxisAlignmentBaseline() : super('CrossAxisAlignmentBaseline');
 }
 
-class Color extends AstNode {
+class Color extends AstParameter {
   final AstNode? r;
   final AstNode? g;
   final AstNode? b;
   final AstNode? a;
 
-  const Color({this.r, this.g, this.b, this.a});
+  const Color({this.r, this.g, this.b, this.a}) : super('Color');
 }
 
-class FontWeight extends AstNode {
-  const FontWeight();
+class FontWeight extends AstParameter {
+  const FontWeight(super.tartType);
 }
 
 class FontWeightBold extends FontWeight {
-  const FontWeightBold();
+  const FontWeightBold() : super('FontWeightBold');
 }
 
 class FontWeightNormal extends FontWeight {
-  const FontWeightNormal();
+  const FontWeightNormal() : super('FontWeightNormal');
 }
 
-class TextStyle extends AstNode {
+class TextStyle extends AstParameter {
   final AstNode? fontFamily;
   final AstNode? fontSize;
   final AstNode? color;
   final AstNode? fontWeight;
 
-  const TextStyle(
-      {this.fontFamily, this.fontSize, this.color, this.fontWeight});
+  const TextStyle({this.fontFamily, this.fontSize, this.color, this.fontWeight})
+      : super('TextStyle');
 }
 
-class InputDecoration extends AstNode {
+class InputDecoration extends AstParameter {
   final AstNode? icon;
   final AstNode? iconColor;
   final AstNode? label;
@@ -198,133 +208,66 @@ class InputDecoration extends AstNode {
     this.enabled,
     this.semanticCounterText,
     this.alignLabelWithHint,
-  });
+  }) : super('InputDecoration');
 }
 
-class Alignment extends AstNode {
-  const Alignment();
+class Alignment extends AstParameter {
+  const Alignment(super.tartType);
 }
 
 class AlignmentTopLeft extends Alignment {
-  const AlignmentTopLeft();
+  const AlignmentTopLeft() : super('AlignmentTopLeft');
 }
 
 class AlignmentTopCenter extends Alignment {
-  const AlignmentTopCenter();
+  const AlignmentTopCenter() : super('AlignmentTopCenter');
 }
 
 class AlignmentTopRight extends Alignment {
-  const AlignmentTopRight();
+  const AlignmentTopRight() : super('AlignmentTopRight');
 }
 
 class AlignmentCenterLeft extends Alignment {
-  const AlignmentCenterLeft();
+  const AlignmentCenterLeft() : super('AlignmentCenterLeft');
 }
 
 class AlignmentCenterRight extends Alignment {
-  const AlignmentCenterRight();
+  const AlignmentCenterRight() : super('AlignmentCenterRight');
 }
 
 class AlignmentBottomLeft extends Alignment {
-  const AlignmentBottomLeft();
+  const AlignmentBottomLeft() : super('AlignmentBottomLeft');
 }
 
 class AlignmentBottomCenter extends Alignment {
-  const AlignmentBottomCenter();
+  const AlignmentBottomCenter() : super('AlignmentBottomCenter');
 }
 
 class AlignmentBottomRight extends Alignment {
-  const AlignmentBottomRight();
+  const AlignmentBottomRight() : super('AlignmentBottomRight');
 }
 
 class AlignmentCenter extends Alignment {
-  const AlignmentCenter();
+  const AlignmentCenter() : super('AlignmentCenter');
 }
 
-class ScrollPhysics extends AstNode {
-  const ScrollPhysics();
+class ScrollPhysics extends AstParameter {
+  const ScrollPhysics(super.tartType);
 }
 
 class NeverScrollableScrollPhysics extends ScrollPhysics {
-  const NeverScrollableScrollPhysics();
+  const NeverScrollableScrollPhysics() : super('NeverScrollableScrollPhysics');
 }
 
 class AlwaysScrollableScrollPhysics extends ScrollPhysics {
-  const AlwaysScrollableScrollPhysics();
+  const AlwaysScrollableScrollPhysics()
+      : super('AlwaysScrollableScrollPhysics');
 }
 
 class BouncingScrollPhysics extends ScrollPhysics {
-  const BouncingScrollPhysics();
+  const BouncingScrollPhysics() : super('BouncingScrollPhysics');
 }
 
 class ClampingScrollPhysics extends ScrollPhysics {
-  const ClampingScrollPhysics();
-}
-
-class Icons extends AstNode {
-  const Icons();
-}
-
-class IconsArrowForward extends Icons {
-  const IconsArrowForward();
-}
-
-class IconsArrowBack extends Icons {
-  const IconsArrowBack();
-}
-
-class IconsInfo extends Icons {
-  const IconsInfo();
-}
-
-class IconsAdd extends Icons {
-  const IconsAdd();
-}
-
-class IconsRemove extends Icons {
-  const IconsRemove();
-}
-
-class IconsEdit extends Icons {
-  const IconsEdit();
-}
-
-class IconsDelete extends Icons {
-  const IconsDelete();
-}
-
-class IconsSave extends Icons {
-  const IconsSave();
-}
-
-class IconsCancel extends Icons {
-  const IconsCancel();
-}
-
-class IconsSearch extends Icons {
-  const IconsSearch();
-}
-
-class IconsClear extends Icons {
-  const IconsClear();
-}
-
-class IconsClose extends Icons {
-  const IconsClose();
-}
-
-class IconsShoppingBag extends Icons {
-  const IconsShoppingBag();
-}
-
-class IconsAttractions extends Icons {
-  const IconsAttractions();
-}
-
-class IconsRestaurant extends Icons {
-  const IconsRestaurant();
-}
-
-class IconsStar extends Icons {
-  const IconsStar();
+  const ClampingScrollPhysics() : super('ClampingScrollPhysics');
 }

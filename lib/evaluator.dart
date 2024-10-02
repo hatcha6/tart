@@ -12,13 +12,11 @@ class EvaluationError implements Exception {
   String toString() => 'EvaluationError: $message';
 }
 
-// Add this class
 class ReturnException implements Exception {
   final dynamic value;
   ReturnException(this.value);
 }
 
-// Add this class at the top of the file
 class EvaluationMetrics {
   int widgetCount = 0;
   int nodeCount = 0;
@@ -103,6 +101,41 @@ class Evaluator {
   // Add this map to store custom widget factories
   final Map<String, flt.Widget Function(Map<String, dynamic> params)>
       _customWidgetFactories = {};
+  final Map<Type, flt.Widget Function(AstWidget node)> _widgetFactories = {};
+  final Map<String, dynamic Function(AstParameter node)> _parameterFactories =
+      {};
+
+  static const Map<String, flt.IconData> icons = {
+    'IconsAdd': flt.Icons.add,
+    'IconsRemove': flt.Icons.remove,
+    'IconsEdit': flt.Icons.edit,
+    'IconsDelete': flt.Icons.delete,
+    'IconsSave': flt.Icons.save,
+    'IconsCancel': flt.Icons.cancel,
+    'IconsSearch': flt.Icons.search,
+    'IconsClear': flt.Icons.clear,
+    'IconsClose': flt.Icons.close,
+    'IconsMenu': flt.Icons.menu,
+    'IconsSettings': flt.Icons.settings,
+    'IconsHome': flt.Icons.home,
+    'IconsPerson': flt.Icons.person,
+    'IconsNotifications': flt.Icons.notifications,
+    'IconsFavorite': flt.Icons.favorite,
+    'IconsShare': flt.Icons.share,
+    'IconsMoreVert': flt.Icons.more_vert,
+    'IconsRefresh': flt.Icons.refresh,
+    'IconsArrowBack': flt.Icons.arrow_back,
+    'IconsArrowForward': flt.Icons.arrow_forward,
+    'IconsCheck': flt.Icons.check,
+    'IconsInfo': flt.Icons.info,
+    'IconsWarning': flt.Icons.warning,
+    'IconsError': flt.Icons.error,
+    'IconsHelp': flt.Icons.help,
+    'IconsShoppingBag': flt.Icons.shopping_bag,
+    'IconsAttractions': flt.Icons.attractions,
+    'IconsRestaurant': flt.Icons.restaurant,
+    'IconsStar': flt.Icons.star,
+  };
 
   final EvaluationMetrics metrics = EvaluationMetrics();
 
@@ -131,9 +164,305 @@ class Evaluator {
   }
 
   Evaluator() {
+    _initializeWidgetFactories();
+    _initializeParameterFactories();
     _currentEnvironment = _globals;
     // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
+  }
+
+  void _initializeWidgetFactories() {
+    _widgetFactories[Text] = (node) {
+      node as Text;
+      return flt.Text(
+        evaluateNode(node.text),
+        style: node.style != null ? _convertTextStyle(node.style!) : null,
+      );
+    };
+    _widgetFactories[Column] = (node) {
+      node as Column;
+      return flt.Column(
+        mainAxisAlignment: _convertMainAxisAlignment(node.mainAxisAlignment),
+        crossAxisAlignment: _convertCrossAxisAlignment(node.crossAxisAlignment),
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[Row] = (node) {
+      node as Row;
+      return flt.Row(
+        mainAxisAlignment: _convertMainAxisAlignment(node.mainAxisAlignment),
+        crossAxisAlignment: _convertCrossAxisAlignment(node.crossAxisAlignment),
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[Container] = (node) {
+      node as Container;
+      return flt.Container(
+        width: node.width != null ? evaluateNode(node.width!).toDouble() : null,
+        height:
+            node.height != null ? evaluateNode(node.height!).toDouble() : null,
+        color: node.color != null ? evaluateNode(node.color!) : null,
+        child: node.child != null ? _evaluateWidget(node.child!) : null,
+      );
+    };
+    _widgetFactories[Image] = (node) {
+      node as Image;
+      return flt.Image.network(evaluateNode(node.url));
+    };
+    _widgetFactories[Padding] = (node) {
+      node as Padding;
+      return flt.Padding(
+        padding: _convertEdgeInsets(node.padding),
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[Center] = (node) {
+      node as Center;
+      return flt.Center(child: _evaluateWidget(node.child));
+    };
+    _widgetFactories[SizedBox] = (node) {
+      node as SizedBox;
+      return flt.SizedBox(
+        width: node.width != null ? evaluateNode(node.width!).toDouble() : null,
+        height:
+            node.height != null ? evaluateNode(node.height!).toDouble() : null,
+        child: node.child != null ? _evaluateWidget(node.child!) : null,
+      );
+    };
+    _widgetFactories[Expanded] = (node) {
+      node as Expanded;
+      return flt.Expanded(
+        flex: node.flex != null ? evaluateNode(node.flex!) : 1,
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[ElevatedButton] = (node) {
+      node as ElevatedButton;
+      return flt.ElevatedButton(
+        onPressed: () => callFunctionDeclaration(
+          node.onPressed,
+          node.onPressed.parameters,
+        ),
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[Card] = (node) {
+      node as Card;
+      return flt.Card(
+        elevation: node.elevation != null
+            ? evaluateNode(node.elevation!).toDouble()
+            : null,
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[ListView] = (node) {
+      node as ListView;
+      return flt.ListView(
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[GridView] = (node) {
+      node as GridView;
+      return flt.GridView(
+        gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: evaluateNode(node.maxCrossAxisExtent).toDouble(),
+        ),
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[ListViewBuilder] = (node) {
+      node as ListViewBuilder;
+      return flt.ListView.builder(
+        itemBuilder: (context, index) {
+          final previousEnvironment = _currentEnvironment;
+          _currentEnvironment.define('index', index, 'final');
+          final result = callFunctionDeclaration(node.itemBuilder, [index]);
+          _currentEnvironment = previousEnvironment;
+          return result;
+        },
+        itemCount: evaluateNode(node.itemCount),
+      );
+    };
+    _widgetFactories[GridViewBuilder] = (node) {
+      node as GridViewBuilder;
+      return flt.GridView.builder(
+        itemBuilder: (context, index) {
+          final previousEnvironment = _currentEnvironment;
+          _currentEnvironment.define('index', index, 'final');
+          final result = callFunctionDeclaration(node.itemBuilder, [index]);
+          _currentEnvironment = previousEnvironment;
+          return result;
+        },
+        itemCount: evaluateNode(node.itemCount),
+        gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: evaluateNode(node.maxCrossAxisExtent).toDouble(),
+        ),
+      );
+    };
+    _widgetFactories[TextField] = (node) {
+      node as TextField;
+      return flt.TextField(
+        decoration:
+            node.decoration != null ? evaluateNode(node.decoration!) : null,
+        onSubmitted: node.onSubmitted != null
+            ? (value) => callFunctionDeclaration(node.onSubmitted!, [value])
+            : null,
+        onChanged: node.onChanged != null
+            ? (value) => callFunctionDeclaration(node.onChanged!, [value])
+            : null,
+      );
+    };
+    _widgetFactories[ListTile] = (node) {
+      node as ListTile;
+      return flt.ListTile(
+        leading: node.leading != null ? evaluateNode(node.leading!) : null,
+        title: node.title != null ? evaluateNode(node.title!) : null,
+        subtitle: node.subtitle != null ? evaluateNode(node.subtitle!) : null,
+        trailing: node.trailing != null ? evaluateNode(node.trailing!) : null,
+        onTap: node.onTap != null
+            ? () => callFunctionDeclaration(node.onTap!, [])
+            : null,
+      );
+    };
+    _widgetFactories[Stack] = (node) {
+      node as Stack;
+      return flt.Stack(
+        alignment: node.alignment != null
+            ? evaluateNode(node.alignment!)
+            : flt.Alignment.topLeft,
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[TextButton] = (node) {
+      node as TextButton;
+      return flt.TextButton(
+        onPressed: () => callFunctionDeclaration(
+          node.onPressed,
+          node.onPressed.parameters,
+        ),
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[OutlinedButton] = (node) {
+      node as OutlinedButton;
+      return flt.OutlinedButton(
+        onPressed: () => callFunctionDeclaration(
+          node.onPressed,
+          node.onPressed.parameters,
+        ),
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[LinearProgressIndicator] = (node) {
+      node as LinearProgressIndicator;
+      return flt.LinearProgressIndicator(
+        value: node.value != null ? evaluateNode(node.value!).toDouble() : null,
+        backgroundColor: node.backgroundColor != null
+            ? evaluateNode(node.backgroundColor!)
+            : null,
+        color: node.color != null ? evaluateNode(node.color!) : null,
+      );
+    };
+    _widgetFactories[CircularProgressIndicator] = (node) {
+      node as CircularProgressIndicator;
+      return flt.CircularProgressIndicator(
+        value: node.value != null ? evaluateNode(node.value!) : null,
+        backgroundColor: node.backgroundColor != null
+            ? evaluateNode(node.backgroundColor!)
+            : null,
+        color: node.color != null ? evaluateNode(node.color!) : null,
+      );
+    };
+    _widgetFactories[SingleChildScrollView] = (node) {
+      node as SingleChildScrollView;
+      return flt.SingleChildScrollView(
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[MaterialApp] = (node) {
+      node as MaterialApp;
+      return flt.MaterialApp(
+        home: _evaluateWidget(node.home),
+      );
+    };
+    _widgetFactories[Scaffold] = (node) {
+      node as Scaffold;
+      return flt.Scaffold(
+        body: node.body != null ? _evaluateWidget(node.body!) : null,
+        appBar: node.appBar != null
+            ? _evaluateWidget(node.appBar!) as flt.PreferredSizeWidget
+            : null,
+        floatingActionButton: node.floatingActionButton != null
+            ? _evaluateWidget(node.floatingActionButton!)
+            : null,
+      );
+    };
+    _widgetFactories[FloatingActionButton] = (node) {
+      node as FloatingActionButton;
+      return flt.FloatingActionButton(
+        onPressed: () => callFunctionDeclaration(
+          node.onPressed,
+          node.onPressed.parameters,
+        ),
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[AppBar] = (node) {
+      node as AppBar;
+      return flt.AppBar(
+        title: evaluateNode(node.title),
+        leading: node.leading != null ? evaluateNode(node.leading!) : null,
+        actions:
+            node.actions != null ? _evaluateListOfWidgets(node.actions!) : null,
+      );
+    };
+    _widgetFactories[Icon] = (node) {
+      node as Icon;
+      return flt.Icon(evaluateNode(node.icon));
+    };
+    _widgetFactories[Positioned] = (node) {
+      node as Positioned;
+      return flt.Positioned(
+        top: node.top != null ? evaluateNode(node.top!).toDouble() : null,
+        left: node.left != null ? evaluateNode(node.left!).toDouble() : null,
+        child: _evaluateWidget(node.child!),
+      );
+    };
+  }
+
+  void _initializeParameterFactories() {
+    _parameterFactories['EdgeInsets'] = (node) {
+      node as EdgeInsets;
+      return _convertEdgeInsets(node);
+    };
+    _parameterFactories['MainAxisAlignment'] = (node) {
+      node as MainAxisAlignment;
+      return _convertMainAxisAlignment(node);
+    };
+    _parameterFactories['CrossAxisAlignment'] = (node) {
+      node as CrossAxisAlignment;
+      return _convertCrossAxisAlignment(node);
+    };
+    _parameterFactories['Color'] = (node) {
+      node as Color;
+      return _convertColor(node);
+    };
+    _parameterFactories['FontWeight'] = (node) {
+      node as FontWeight;
+      return _convertFontWeight(node);
+    };
+    _parameterFactories['InputDecoration'] = (node) {
+      node as InputDecoration;
+      return _convertInputDecoration(node);
+    };
+    _parameterFactories['Alignment'] = (node) {
+      node as Alignment;
+      return _convertAlignment(node);
+    };
+    _parameterFactories['Icons'] = (node) {
+      node as Icons;
+      return _convertIcon(node);
+    };
   }
 
   void setImportHandler(List<AstNode> Function(String filepath) importHandler) {
@@ -189,6 +518,7 @@ class Evaluator {
       BreakStatement() => throw BreakException(),
       ToString() => _evaluateToString(node),
       ImportStatement() => _evaluateImportStatement(node),
+      AstParameter() => _evaluateParameter(node),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -373,240 +703,26 @@ class Evaluator {
 
   flt.Widget _evaluateWidget(AstWidget node) {
     metrics.widgetCount++;
-    return switch (node) {
-      Text(text: final text, style: final style) => flt.Text(evaluateNode(text),
-          style: style != null ? _convertTextStyle(style) : null),
-      Column(
-        children: final children,
-        mainAxisAlignment: final mainAxisAlignment,
-        crossAxisAlignment: final crossAxisAlignment
-      ) =>
-        flt.Column(
-          mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
-          crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
-          children: _evaluateListOfWidgets(children),
-        ),
-      Row(
-        children: final children,
-        mainAxisAlignment: final mainAxisAlignment,
-        crossAxisAlignment: final crossAxisAlignment
-      ) =>
-        flt.Row(
-          mainAxisAlignment: _convertMainAxisAlignment(mainAxisAlignment),
-          crossAxisAlignment: _convertCrossAxisAlignment(crossAxisAlignment),
-          children: _evaluateListOfWidgets(children),
-        ),
-      Container(
-        child: final child,
-        width: final width,
-        height: final height,
-        color: final color
-      ) =>
-        flt.Container(
-          width: width != null ? evaluateNode(width).toDouble() : null,
-          height: height != null ? evaluateNode(height).toDouble() : null,
-          color: color != null ? _convertColor(color as Color) : null,
-          child: child != null ? _evaluateWidget(child) : null,
-        ),
-      Image(url: final url) => flt.Image.network(evaluateNode(url)),
-      Padding(padding: final padding, child: final child) => flt.Padding(
-          padding: _convertEdgeInsets(padding),
-          child: _evaluateWidget(child),
-        ),
-      Center(child: final child) => flt.Center(child: _evaluateWidget(child)),
-      SizedBox(width: final width, height: final height, child: final child) =>
-        flt.SizedBox(
-          width: width != null ? evaluateNode(width).toDouble() : null,
-          height: height != null ? evaluateNode(height).toDouble() : null,
-          child: child != null ? _evaluateWidget(child) : null,
-        ),
-      Expanded(child: final child, flex: final flex) => flt.Expanded(
-          flex: flex != null ? evaluateNode(flex) : 1,
-          child: _evaluateWidget(child),
-        ),
-      ElevatedButton(child: final child, onPressed: final onPressed) =>
-        flt.ElevatedButton(
-          onPressed: () => callFunctionDeclaration(
-            onPressed,
-            onPressed.parameters,
-          ),
-          child: _evaluateWidget(child),
-        ),
-      Card(child: final child, elevation: final elevation) => flt.Card(
-          elevation: elevation != null ? evaluateNode(elevation) : null,
-          child: _evaluateWidget(child),
-        ),
-      ListView(children: final children) => flt.ListView(
-          children: _evaluateListOfWidgets(children),
-        ),
-      GridView(
-        children: final children,
-        maxCrossAxisExtent: final maxCrossAxisExtent
-      ) =>
-        flt.GridView(
-          gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: evaluateNode(maxCrossAxisExtent),
-          ),
-          children: _evaluateListOfWidgets(children),
-        ),
-      ListViewBuilder(
-        itemBuilder: final itemBuilder,
-        itemCount: final itemCount
-      ) =>
-        flt.ListView.builder(
-          itemBuilder: (context, index) {
-            final previousEnvironment = _currentEnvironment;
-            _currentEnvironment.define('index', index, 'final');
-            final result = callFunctionDeclaration(itemBuilder, [index]);
-            _currentEnvironment = previousEnvironment;
-            return result;
-          },
-          itemCount: evaluateNode(itemCount),
-        ),
-      GridViewBuilder(
-        itemBuilder: final itemBuilder,
-        itemCount: final itemCount,
-        maxCrossAxisExtent: final maxCrossAxisExtent
-      ) =>
-        flt.GridView.builder(
-          itemBuilder: (context, index) {
-            final previousEnvironment = _currentEnvironment;
-            _currentEnvironment.define('index', index, 'final');
-            final result = callFunctionDeclaration(itemBuilder, [index]);
-            _currentEnvironment = previousEnvironment;
-            return result;
-          },
-          itemCount: evaluateNode(itemCount),
-          gridDelegate: flt.SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: evaluateNode(maxCrossAxisExtent),
-          ),
-        ),
-      TextField(
-        decoration: final decoration,
-        onSubmitted: final onSubmitted,
-        onChanged: final onChanged
-      ) =>
-        flt.TextField(
-          decoration: decoration != null
-              ? _convertInputDecoration(decoration as InputDecoration)
-              : null,
-          onSubmitted: onSubmitted != null
-              ? (value) => callFunctionDeclaration(onSubmitted, [value])
-              : null,
-          onChanged: onChanged != null
-              ? (value) => callFunctionDeclaration(onChanged, [value])
-              : null,
-        ),
-      ListTile(
-        leading: final leading,
-        title: final title,
-        subtitle: final subtitle,
-        trailing: final trailing,
-        onTap: final onTap
-      ) =>
-        flt.ListTile(
-          leading:
-              leading != null ? _evaluateWidget(leading as AstWidget) : null,
-          title: title != null ? _evaluateWidget(title as AstWidget) : null,
-          subtitle:
-              subtitle != null ? _evaluateWidget(subtitle as AstWidget) : null,
-          trailing:
-              trailing != null ? _evaluateWidget(trailing as AstWidget) : null,
-          onTap:
-              onTap != null ? () => callFunctionDeclaration(onTap, []) : null,
-        ),
-      Stack(children: final children, alignment: final alignment) => flt.Stack(
-          alignment: (alignment != null
-                  ? _convertAlignment(alignment as AstWidget)
-                  : null) ??
-              flt.Alignment.topLeft,
-          children: _evaluateListOfWidgets(children),
-        ),
-      TextButton(child: final child, onPressed: final onPressed) =>
-        flt.TextButton(
-          onPressed: () => callFunctionDeclaration(
-            onPressed,
-            onPressed.parameters,
-          ),
-          child: _evaluateWidget(child),
-        ),
-      OutlinedButton(child: final child, onPressed: final onPressed) =>
-        flt.OutlinedButton(
-          onPressed: () => callFunctionDeclaration(
-            onPressed,
-            onPressed.parameters,
-          ),
-          child: _evaluateWidget(child),
-        ),
-      LinearProgressIndicator(
-        value: final value,
-        backgroundColor: final backgroundColor,
-        color: final color
-      ) =>
-        flt.LinearProgressIndicator(
-          value: value != null ? evaluateNode(value) : null,
-          backgroundColor: backgroundColor != null
-              ? _convertColor(backgroundColor as Color)
-              : null,
-          color: color != null ? _convertColor(color as Color) : null,
-        ),
-      CircularProgressIndicator(
-        value: final value,
-        backgroundColor: final backgroundColor,
-        color: final color
-      ) =>
-        flt.CircularProgressIndicator(
-          value: value != null ? evaluateNode(value) : null,
-          backgroundColor: backgroundColor != null
-              ? _convertColor(backgroundColor as Color)
-              : null,
-          color: color != null ? _convertColor(color as Color) : null,
-        ),
-      CustomAstWidget() => _evaluateCustomWidget(node),
-      SingleChildScrollView(child: final child) =>
-        flt.SingleChildScrollView(child: _evaluateWidget(child)),
-      MaterialApp(home: final child) =>
-        flt.MaterialApp(home: _evaluateWidget(child)),
-      Scaffold(
-        body: final body,
-        appBar: final appBar,
-        floatingActionButton: final floatingActionButton
-      ) =>
-        flt.Scaffold(
-            body: body != null ? _evaluateWidget(body) : null,
-            appBar: appBar != null
-                ? _evaluateWidget(appBar) as flt.PreferredSizeWidget
-                : null,
-            floatingActionButton: floatingActionButton != null
-                ? _evaluateWidget(floatingActionButton)
-                : null),
-      FloatingActionButton(child: final child, onPressed: final onPressed) =>
-        flt.FloatingActionButton(
-          onPressed: () => callFunctionDeclaration(
-            onPressed,
-            onPressed.parameters,
-          ),
-          child: _evaluateWidget(child),
-        ),
-      AppBar(
-        title: final title,
-        leading: final leading,
-        actions: final actions
-      ) =>
-        flt.AppBar(
-          title: _evaluateWidget(title as AstWidget),
-          leading:
-              leading != null ? _evaluateWidget(leading as AstWidget) : null,
-          actions: actions != null ? _evaluateListOfWidgets(actions) : null,
-        ),
-      Icon(icon: final icon) => flt.Icon(_convertIcon(icon as Icons)),
-      Positioned(child: final child, top: final top, left: final left) =>
-        flt.Positioned(
-          top: top != null ? evaluateNode(top).toDouble() : null,
-          left: left != null ? evaluateNode(left).toDouble() : null,
-          child: _evaluateWidget(child as AstWidget),
-        ),
-    };
+    final widgetType = node.runtimeType;
+    var factory = _widgetFactories[widgetType];
+    if (factory != null) {
+      return factory(node);
+    } else {
+      return _evaluateCustomWidget(node as CustomAstWidget);
+    }
+  }
+
+  dynamic _evaluateParameter(AstParameter node) {
+    final parameterType = node.tartType;
+    final factoryKey = _parameterFactories.keys.firstWhere(
+      (e) => parameterType.contains(e),
+    );
+    final factory = _parameterFactories[factoryKey];
+    if (factory != null) {
+      return factory(node);
+    } else {
+      throw EvaluationError('Unknown parameter type: ${node.tartType}');
+    }
   }
 
   dynamic _evaluateAnonymousFunction(AnonymousFunction node) {
@@ -684,25 +800,7 @@ class Evaluator {
   }
 
   flt.IconData _convertIcon(Icons node) {
-    return switch (node) {
-      IconsSave() => flt.Icons.save,
-      IconsCancel() => flt.Icons.cancel,
-      IconsSearch() => flt.Icons.search,
-      IconsClear() => flt.Icons.clear,
-      IconsClose() => flt.Icons.close,
-      IconsShoppingBag() => flt.Icons.shopping_bag,
-      IconsAttractions() => flt.Icons.attractions,
-      IconsRestaurant() => flt.Icons.restaurant,
-      IconsStar() => flt.Icons.star,
-      IconsAdd() => flt.Icons.add,
-      IconsRemove() => flt.Icons.remove,
-      IconsEdit() => flt.Icons.edit,
-      IconsDelete() => flt.Icons.delete,
-      IconsArrowBack() => flt.Icons.arrow_back,
-      IconsArrowForward() => flt.Icons.arrow_forward,
-      IconsInfo() => flt.Icons.info,
-      _ => throw EvaluationError('Unknown icon: ${node.runtimeType}'),
-    };
+    return icons[node.tartType]!;
   }
 
   flt.TextStyle _convertTextStyle(TextStyle style) {
@@ -717,7 +815,7 @@ class Evaluator {
     );
   }
 
-  flt.AlignmentGeometry _convertAlignment(AstWidget node) {
+  flt.AlignmentGeometry _convertAlignment(Alignment node) {
     return switch (node) {
       AlignmentTopLeft() => flt.Alignment.topLeft,
       AlignmentTopCenter() => flt.Alignment.topCenter,
@@ -1005,7 +1103,9 @@ class Evaluator {
   }
 
   flt.Widget _evaluateCustomWidget(CustomAstWidget node) {
-    final factory = _customWidgetFactories[node.name.lexeme];
+    final factoryKey = _customWidgetFactories.keys
+        .firstWhere((e) => node.name.lexeme.contains(e));
+    final factory = _customWidgetFactories[factoryKey];
     if (factory != null) {
       Map<String, dynamic> params = {};
       for (var entry in node.params.entries) {
@@ -1013,7 +1113,7 @@ class Evaluator {
       }
       return factory(params);
     }
-    throw EvaluationError("Unknown custom widget: ${node.name.lexeme}");
+    throw EvaluationError("Unknown custom widget: ${node.tartType}");
   }
 
   // Add this method to reset metrics

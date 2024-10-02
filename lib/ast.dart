@@ -5,20 +5,22 @@ import 'dart:math';
 
 part 'widget_ast.dart';
 part 'parameter_ast.dart';
+part 'icons_ast.dart';
 
 sealed class AstNode {
-  const AstNode();
+  final String tartType;
+  const AstNode(this.tartType);
 }
 
 class ImportStatement extends AstNode {
   final Token keyword;
   final String path;
 
-  const ImportStatement(this.keyword, this.path);
+  const ImportStatement(this.keyword, this.path) : super('ImportStatement');
 }
 
 class EndOfFile extends AstNode {
-  const EndOfFile();
+  const EndOfFile() : super('EndOfFile');
 }
 
 class VariableDeclaration extends AstNode {
@@ -26,7 +28,8 @@ class VariableDeclaration extends AstNode {
   final Token name;
   final AstNode? initializer;
 
-  const VariableDeclaration(this.keyword, this.name, this.initializer);
+  const VariableDeclaration(this.keyword, this.name, this.initializer)
+      : super('VariableDeclaration');
 }
 
 class FunctionDeclaration extends AstNode {
@@ -34,7 +37,8 @@ class FunctionDeclaration extends AstNode {
   final List<Token> parameters;
   final Block body;
 
-  const FunctionDeclaration(this.name, this.parameters, this.body);
+  const FunctionDeclaration(this.name, this.parameters, this.body)
+      : super('FunctionDeclaration');
 }
 
 class IfStatement extends AstNode {
@@ -42,14 +46,15 @@ class IfStatement extends AstNode {
   final AstNode thenBranch;
   final AstNode? elseBranch;
 
-  const IfStatement(this.condition, this.thenBranch, this.elseBranch);
+  const IfStatement(this.condition, this.thenBranch, this.elseBranch)
+      : super('IfStatement');
 }
 
 class WhileStatement extends AstNode {
   final AstNode condition;
   final AstNode body;
 
-  const WhileStatement(this.condition, this.body);
+  const WhileStatement(this.condition, this.body) : super('WhileStatement');
 }
 
 class ForStatement extends AstNode {
@@ -59,26 +64,27 @@ class ForStatement extends AstNode {
   final AstNode body;
 
   const ForStatement(
-      this.initializer, this.condition, this.increment, this.body);
+      this.initializer, this.condition, this.increment, this.body)
+      : super('ForStatement');
 }
 
 class ReturnStatement extends AstNode {
   final Token keyword;
   final AstNode? value;
 
-  const ReturnStatement(this.keyword, this.value);
+  const ReturnStatement(this.keyword, this.value) : super('ReturnStatement');
 }
 
 class Block extends AstNode {
   final List<AstNode> statements;
 
-  const Block(this.statements);
+  const Block(this.statements) : super('Block');
 }
 
 class ExpressionStatement extends AstNode {
   final AstNode expression;
 
-  const ExpressionStatement(this.expression);
+  const ExpressionStatement(this.expression) : super('ExpressionStatement');
 }
 
 class Assignment extends AstNode {
@@ -86,7 +92,7 @@ class Assignment extends AstNode {
   final Token operator;
   final AstNode value;
 
-  const Assignment(this.name, this.operator, this.value);
+  const Assignment(this.name, this.operator, this.value) : super('Assignment');
 }
 
 class BinaryExpression extends AstNode {
@@ -94,14 +100,15 @@ class BinaryExpression extends AstNode {
   final Token operator;
   final AstNode right;
 
-  const BinaryExpression(this.left, this.operator, this.right);
+  const BinaryExpression(this.left, this.operator, this.right)
+      : super('BinaryExpression');
 }
 
 class UnaryExpression extends AstNode {
   final Token operator;
   final AstNode right;
 
-  const UnaryExpression(this.operator, this.right);
+  const UnaryExpression(this.operator, this.right) : super('UnaryExpression');
 }
 
 class CallExpression extends AstNode {
@@ -109,19 +116,20 @@ class CallExpression extends AstNode {
   final Token paren;
   final List<AstNode> arguments;
 
-  const CallExpression(this.callee, this.paren, this.arguments);
+  const CallExpression(this.callee, this.paren, this.arguments)
+      : super('CallExpression');
 }
 
 class Literal extends AstNode {
   final dynamic value;
 
-  const Literal(this.value);
+  const Literal(this.value) : super('Literal');
 }
 
 class Variable extends AstNode {
   final Token name;
 
-  const Variable(this.name);
+  const Variable(this.name) : super('Variable');
 }
 
 class AnonymousFunction extends FunctionDeclaration {
@@ -134,6 +142,7 @@ class AnonymousFunction extends FunctionDeclaration {
             TokenType.identifier,
             '_anon_${_generateUniqueId()}',
             null,
+            -1,
             -1,
           ),
           parameters,
@@ -153,55 +162,55 @@ class MemberAccess extends AstNode {
   final AstNode object;
   final Token name;
 
-  MemberAccess(this.object, this.name);
+  const MemberAccess(this.object, this.name) : super('MemberAccess');
 }
 
 class IndexAccess extends AstNode {
   final AstNode object;
   final AstNode index;
 
-  IndexAccess(this.object, this.index);
+  const IndexAccess(this.object, this.index) : super('IndexAccess');
 }
 
 class ListLiteral extends AstNode {
   final List<AstNode> elements;
 
-  ListLiteral(this.elements);
+  const ListLiteral(this.elements) : super('ListLiteral');
 }
 
 class LengthAccess extends AstNode {
   final AstNode object;
 
-  LengthAccess(this.object);
+  const LengthAccess(this.object) : super('LengthAccess');
 }
 
 class MapLiteral extends AstNode {
   final List<MapEntry> entries;
 
-  MapLiteral(this.entries);
+  const MapLiteral(this.entries) : super('MapLiteral');
 }
 
 class MapEntry extends AstNode {
   final AstNode key;
   final AstNode value;
 
-  MapEntry(this.key, this.value);
+  const MapEntry(this.key, this.value) : super('MapEntry');
 }
 
 class SetLiteral extends AstNode {
   final List<AstNode> elements;
 
-  SetLiteral(this.elements);
+  const SetLiteral(this.elements) : super('SetLiteral');
 }
 
 class BreakStatement extends AstNode {
   final Token keyword;
 
-  const BreakStatement(this.keyword);
+  const BreakStatement(this.keyword) : super('BreakStatement');
 }
 
 class ToString extends AstNode {
   final AstNode expression;
 
-  ToString(this.expression);
+  const ToString(this.expression) : super('ToString');
 }

@@ -9,6 +9,7 @@ class Parser {
   int current = 0;
   Token? _nextToken;
   final List<ParseError> errors = [];
+  String sourceCode = '';
 
   Parser();
 
@@ -17,11 +18,173 @@ class Parser {
     current = 0;
     _nextToken = null;
     errors.clear();
+    sourceCode = '';
   }
 
-  List<AstNode> parse(List<Token> tokens) {
+  final edgeInsetsFactories = {
+    'EdgeInsetsAll': (parameters) => EdgeInsetsAll(parameters['value']!),
+    'EdgeInsetsSymmetric': (parameters) => EdgeInsetsSymmetric(
+          parameters['horizontal'],
+          parameters['vertical'],
+        ),
+    'EdgeInsetsOnly': (parameters) => EdgeInsetsOnly(
+          parameters['top'],
+          parameters['right'],
+          parameters['bottom'],
+          parameters['left'],
+        ),
+  };
+
+  static const iconsMap = {
+    'IconsAdd': IconsAdd(),
+    'IconsRemove': IconsRemove(),
+    'IconsEdit': IconsEdit(),
+    'IconsDelete': IconsDelete(),
+    'IconsSave': IconsSave(),
+    'IconsCancel': IconsCancel(),
+    'IconsSearch': IconsSearch(),
+    'IconsClear': IconsClear(),
+    'IconsClose': IconsClose(),
+    'IconsMenu': IconsMenu(),
+    'IconsSettings': IconsSettings(),
+    'IconsHome': IconsHome(),
+    'IconsPerson': IconsPerson(),
+    'IconsNotifications': IconsNotifications(),
+    'IconsFavorite': IconsFavorite(),
+    'IconsShare': IconsShare(),
+    'IconsMoreVert': IconsMoreVert(),
+    'IconsRefresh': IconsRefresh(),
+    'IconsArrowBack': IconsArrowBack(),
+    'IconsArrowForward': IconsArrowForward(),
+    'IconsCheck': IconsCheck(),
+    'IconsInfo': IconsInfo(),
+    'IconsWarning': IconsWarning(),
+    'IconsError': IconsError(),
+    'IconsHelp': IconsHelp(),
+    'IconsShoppingBag': IconsShoppingBag(),
+    'IconsAttractions': IconsAttractions(),
+    'IconsRestaurant': IconsRestaurant(),
+    'IconsStar': IconsStar(),
+  };
+
+  final widgetFactories = {
+    'Text': (params) => Text(params['text']!, params['style']),
+    'Column': (params) => Column(
+          params['children']!,
+          params['mainAxisAlignment'],
+          params['crossAxisAlignment'],
+        ),
+    'Row': (params) => Row(
+          params['children']!,
+          params['mainAxisAlignment'],
+          params['crossAxisAlignment'],
+        ),
+    'Container': (params) => Container(
+        params['child'], params['width'], params['height'], params['color']),
+    'Image': (params) => Image(params['url']!),
+    'Padding': (params) => Padding(params['padding'], params['child']),
+    'Center': (params) => Center(params['child']),
+    'SizedBox': (params) => SizedBox(
+          width: params['width'],
+          height: params['height'],
+          child: params['child'],
+        ),
+    'Expanded': (params) => Expanded(params['child'], params['flex']),
+    'ElevatedButton': (params) =>
+        ElevatedButton(params['child'], params['onPressed']),
+    'Card': (params) => Card(params['child'], params['elevation']),
+    'ListView': (params) => ListView(
+          params['children'],
+          params['shrinkWrap'],
+          params['physics'],
+        ),
+    'GridView': (params) {
+      final optionalParam = params['maxCrossAxisExtent'];
+      final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
+      return GridView(
+        params['children'] as AstNode,
+        mainCrossAxisExtent,
+        params['shrinkWrap'],
+        params['physics'],
+      );
+    },
+    'ListViewBuilder': (params) => ListViewBuilder(
+          params['itemBuilder'],
+          params['itemCount'],
+          params['shrinkWrap'],
+          params['physics'],
+        ),
+    'GridViewBuilder': (params) {
+      final optionalParam = params['maxCrossAxisExtent'];
+      final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
+      return GridViewBuilder(
+        params['itemBuilder'],
+        params['itemCount'],
+        mainCrossAxisExtent,
+        params['shrinkWrap'],
+        params['physics'],
+      );
+    },
+    'TextField': (params) => TextField(
+          params['decoration'],
+          params['onSubmitted'],
+          params['onChanged'],
+        ),
+    'ListTile': (params) => ListTile(
+          params['leading'],
+          params['title'],
+          params['subtitle'],
+          params['trailing'],
+          params['onTap'],
+        ),
+    'OutlinedButton': (params) =>
+        OutlinedButton(params['child'], params['onPressed']),
+    'TextButton': (params) => TextButton(params['child'], params['onPressed']),
+    'Stack': (params) => Stack(params['children']!, params['alignment']),
+    'LinearProgressIndicator': (params) => LinearProgressIndicator(
+          params['value'],
+          params['backgroundColor'],
+          params['color'],
+        ),
+    'CircularProgressIndicator': (params) => CircularProgressIndicator(
+          params['value'],
+          params['backgroundColor'],
+          params['color'],
+        ),
+    'Positioned': (params) => Positioned(
+          params['left'],
+          params['top'],
+          params['right'],
+          params['bottom'],
+          params['child'],
+        ),
+    'Icon': (params) => Icon(params['icon']),
+    'MaterialApp': (params) => MaterialApp(
+          params['home'],
+        ),
+    'Scaffold': (params) => Scaffold(
+          params['appBar'],
+          params['body'],
+          params['floatingActionButton'],
+        ),
+    'FloatingActionButton': (params) => FloatingActionButton(
+          params['child'],
+          params['onPressed'],
+        ),
+    'AppBar': (params) => AppBar(
+          params['title'],
+          params['leading'],
+          params['actions'],
+        ),
+    'SingleChildScrollView': (params) => SingleChildScrollView(
+          params['child'],
+        ),
+  };
+
+  List<AstNode> parse(List<Token> tokens, String source) {
     reset();
     this.tokens = tokens;
+    sourceCode = source;
     List<AstNode> statements = [];
     while (!isAtEnd()) {
       statements.add(declaration());
@@ -29,9 +192,10 @@ class Parser {
     return statements;
   }
 
-  Future<List<AstNode>> parseAsync(List<Token> tokens) async {
+  Future<List<AstNode>> parseAsync(List<Token> tokens, String source) async {
     reset();
     this.tokens = tokens;
+    sourceCode = source; // Set the source code
     List<Future<AstNode>> futures = [];
 
     while (!isAtEnd()) {
@@ -135,145 +299,9 @@ class Parser {
         consume(TokenType.identifier, "Expect widget name after 'flutter::'.");
     final parameters = _parseParameterNodes();
 
-    final widgetFactories = {
-      'Text': (name, params) => Text(name, params['text']!, params['style']),
-      'Column': (name, params) => Column(
-            name,
-            params['children']!,
-            params['mainAxisAlignment'],
-            params['crossAxisAlignment'],
-          ),
-      'Row': (name, params) => Row(
-            name,
-            params['children']!,
-            params['mainAxisAlignment'],
-            params['crossAxisAlignment'],
-          ),
-      'Container': (name, params) => Container(name, params['child'],
-          params['width'], params['height'], params['color']),
-      'Image': (name, params) => Image(name, params['url']!),
-      'Padding': (name, params) =>
-          Padding(name, params['padding'], params['child']),
-      'Center': (name, params) => Center(name, params['child']),
-      'SizedBox': (name, params) => SizedBox(
-            name,
-            width: params['width'],
-            height: params['height'],
-            child: params['child'],
-          ),
-      'Expanded': (name, params) =>
-          Expanded(name, params['child'], params['flex']),
-      'ElevatedButton': (name, params) =>
-          ElevatedButton(name, params['child'], params['onPressed']),
-      'Card': (name, params) =>
-          Card(name, params['child'], params['elevation']),
-      'ListView': (name, params) => ListView(
-            name,
-            params['children'],
-            params['shrinkWrap'],
-            params['physics'],
-          ),
-      'GridView': (name, params) {
-        final optionalParam = params['maxCrossAxisExtent'];
-        final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
-        return GridView(
-          name,
-          params['children'] as AstNode,
-          mainCrossAxisExtent,
-          params['shrinkWrap'],
-          params['physics'],
-        );
-      },
-      'ListViewBuilder': (name, params) => ListViewBuilder(
-            name,
-            params['itemBuilder'],
-            params['itemCount'],
-            params['shrinkWrap'],
-            params['physics'],
-          ),
-      'GridViewBuilder': (name, params) {
-        final optionalParam = params['maxCrossAxisExtent'];
-        final mainCrossAxisExtent = optionalParam ?? const Literal(100.0);
-        return GridViewBuilder(
-          name,
-          params['itemBuilder'],
-          params['itemCount'],
-          mainCrossAxisExtent,
-          params['shrinkWrap'],
-          params['physics'],
-        );
-      },
-      'TextField': (name, params) => TextField(
-            name,
-            params['decoration'],
-            params['onSubmitted'],
-            params['onChanged'],
-          ),
-      'ListTile': (name, params) => ListTile(
-            name,
-            params['leading'],
-            params['title'],
-            params['subtitle'],
-            params['trailing'],
-            params['onTap'],
-          ),
-      'OutlinedButton': (name, params) =>
-          OutlinedButton(name, params['child'], params['onPressed']),
-      'TextButton': (name, params) =>
-          TextButton(name, params['child'], params['onPressed']),
-      'Stack': (name, params) =>
-          Stack(name, params['children']!, params['alignment']),
-      'LinearProgressIndicator': (name, params) => LinearProgressIndicator(
-            name,
-            params['value'],
-            params['backgroundColor'],
-            params['color'],
-          ),
-      'CircularProgressIndicator': (name, params) => CircularProgressIndicator(
-            name,
-            params['value'],
-            params['backgroundColor'],
-            params['color'],
-          ),
-      'Positioned': (name, params) => Positioned(
-            name,
-            params['left'],
-            params['top'],
-            params['right'],
-            params['bottom'],
-            params['child'],
-          ),
-      'Icon': (name, params) => Icon(name, params['icon']),
-      'MaterialApp': (name, params) => MaterialApp(
-            name,
-            params['home'],
-          ),
-      'Scaffold': (name, params) => Scaffold(
-            name,
-            params['appBar'],
-            params['body'],
-            params['floatingActionButton'],
-          ),
-      'FloatingActionButton': (name, params) => FloatingActionButton(
-            name,
-            params['child'],
-            params['onPressed'],
-          ),
-      'AppBar': (name, params) => AppBar(
-            name,
-            params['title'],
-            params['leading'],
-            params['actions'],
-          ),
-      'SingleChildScrollView': (name, params) => SingleChildScrollView(
-            name,
-            params['child'],
-          ),
-    };
-
     final widgetFactory = widgetFactories[name.lexeme];
     if (widgetFactory != null) {
-      return widgetFactory(name, parameters);
+      return widgetFactory(parameters);
     }
 
     // Handle custom widgets
@@ -334,24 +362,6 @@ class Parser {
 
   Icons parseIcons(Token name) {
     consume(TokenType.leftParen, "Expect '(' after Icons method.");
-    const iconsMap = {
-      'IconsArrowForward': IconsArrowForward(),
-      'IconsArrowBack': IconsArrowBack(),
-      'IconsInfo': IconsInfo(),
-      'IconsAdd': IconsAdd(),
-      'IconsRemove': IconsRemove(),
-      'IconsEdit': IconsEdit(),
-      'IconsDelete': IconsDelete(),
-      'IconsSave': IconsSave(),
-      'IconsCancel': IconsCancel(),
-      'IconsSearch': IconsSearch(),
-      'IconsClear': IconsClear(),
-      'IconsClose': IconsClose(),
-      'IconsShoppingBag': IconsShoppingBag(),
-      'IconsAttractions': IconsAttractions(),
-      'IconsRestaurant': IconsRestaurant(),
-      'IconsStar': IconsStar(),
-    };
     final result = iconsMap[name.lexeme];
     if (result == null) {
       throw error(name, "Unknown Icons method: ${name.lexeme}");
@@ -469,23 +479,9 @@ class Parser {
   EdgeInsets parseEdgeInsets(Token name) {
     final parameters = _parseParameterNodes();
 
-    final edgeInsetsFactories = {
-      'EdgeInsetsAll': () => EdgeInsetsAll(parameters['value']!),
-      'EdgeInsetsSymmetric': () => EdgeInsetsSymmetric(
-            parameters['horizontal'],
-            parameters['vertical'],
-          ),
-      'EdgeInsetsOnly': () => EdgeInsetsOnly(
-            parameters['top'],
-            parameters['right'],
-            parameters['bottom'],
-            parameters['left'],
-          ),
-    };
-
     final factory = edgeInsetsFactories[name.lexeme];
     if (factory != null) {
-      return factory();
+      return factory(parameters);
     } else {
       throw error(name, "Unknown EdgeInsets method: ${name.lexeme}");
     }
@@ -892,7 +888,8 @@ class Parser {
   }
 
   Exception error(Token token, String message) {
-    errors.add(ParseError(token, message));
+    errors.add(ParseError(
+        token, message, sourceCode)); // Pass sourceCode to ParseError
     return ParseException(message);
   }
 
@@ -932,16 +929,33 @@ class Parser {
 class ParseError {
   final Token token;
   final String message;
+  final String sourceCode;
 
-  ParseError(this.token, this.message);
+  ParseError(this.token, this.message, this.sourceCode);
 
   @override
   String toString() {
     if (token.type == TokenType.eof) {
       return "Error at end: $message";
     } else {
-      return "Error at '${token.lexeme}' (line ${token.line}): $message";
+      String errorLine = _getErrorLine();
+      String pointer = _getErrorPointer();
+      return "Error at '${token.lexeme}' (line ${token.line}):\n$errorLine\n$pointer\n$message";
     }
+  }
+
+  String _getErrorLine() {
+    List<String> lines = sourceCode.split('\n');
+    if (token.line > 0 && token.line <= lines.length) {
+      return lines[token.line - 1];
+    }
+    return "";
+  }
+
+  String _getErrorPointer() {
+    int column = token.column;
+    // ignore: prefer_interpolation_to_compose_strings
+    return ' ' * (column - 1) + '^';
   }
 }
 

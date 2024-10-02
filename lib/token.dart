@@ -89,8 +89,9 @@ class Token {
   final String lexeme;
   final Object? literal;
   final int line;
+  final int column;
 
-  const Token(this.type, this.lexeme, this.literal, this.line);
+  const Token(this.type, this.lexeme, this.literal, this.line, this.column);
 
   @override
   String toString() {

@@ -126,7 +126,7 @@ return f:Card(
     super.initState();
   }
 
-  buildWidget(Map<String, dynamic> item) {
+  TartStatefulWidget buildWidget(Map<String, dynamic> item) {
     final widget = switch (item['type']) {
       'restaurant' => restaurantWidget,
       'shop' => shopWidget,
@@ -163,14 +163,19 @@ return f:Card(
                         .toLowerCase()
                         .contains(search.toLowerCase()))
                     .toList();
-            return Expanded(
-              child: ListView.builder(
-                itemCount: filteredItems.length,
-                itemBuilder: (context, index) {
-                  final item = filteredItems[index];
-                  return buildWidget(item);
-                },
-              ),
+            return TartBuilder(
+              tartWidgets:
+                  filteredItems.map((item) => buildWidget(item)).toList(),
+              builder: (context, tartWidgets) {
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      return tartWidgets[index];
+                    },
+                  ),
+                );
+              },
             );
           }),
         ],
