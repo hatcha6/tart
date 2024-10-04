@@ -98,17 +98,6 @@ class Tart {
     return _runWithBenchmark(source, environmentId: environmentId);
   }
 
-  Future<(dynamic, BenchmarkResults?)> runAsync(String source,
-      {bool benchmark = false}) async {
-    if (benchmark) {
-      return _runWithBenchmarkAsync(source);
-    } else {
-      var tokens = await lexer.scanTokensAsync(source);
-      var nodes = await parser.parseAsync(tokens, source);
-      return (evaluator.evaluate(nodes), null);
-    }
-  }
-
   String createIsolatedEnvironment() {
     return evaluator.createIsolatedEnvironment();
   }
@@ -125,13 +114,6 @@ class Tart {
     List<Token> tokens = lexer.scanTokens(source);
     final ast = parser.parse(tokens, source);
     return evaluator.evaluate(ast, environmentId: environmentId);
-  }
-
-  Future<dynamic> runAsyncInEnvironment(String source,
-      {String? environmentId}) async {
-    var tokens = await lexer.scanTokensAsync(source);
-    var nodes = await parser.parseAsync(tokens, source);
-    return evaluator.evaluate(nodes, environmentId: environmentId);
   }
 
   void defineGlobalVariable(String name, dynamic value) =>
@@ -177,46 +159,6 @@ class Tart {
 
     Stopwatch evaluatorStopwatch = Stopwatch()..start();
     final result = evaluator.evaluate(nodes, environmentId: environmentId);
-    evaluatorStopwatch.stop();
-    double evaluatorTime = evaluatorStopwatch.elapsedMicroseconds / 1000000;
-
-    double totalTime = lexerTime + parserTime + evaluatorTime;
-
-    int finalMemoryUsage = _getMemoryUsage();
-    double memoryUsage = (finalMemoryUsage - initialMemoryUsage) / 1024;
-
-    return (
-      result,
-      BenchmarkResults(
-        lexerTokensPerSecond: tokensPerSecond,
-        lexerTime: lexerTime,
-        parserNodesPerSecond: nodesPerSecond,
-        parserTime: parserTime,
-        evaluatorTime: evaluatorTime,
-        totalTime: totalTime,
-        memoryUsage: memoryUsage,
-      )
-    );
-  }
-
-  Future<(dynamic, BenchmarkResults)> _runWithBenchmarkAsync(
-      String source) async {
-    int initialMemoryUsage = _getMemoryUsage();
-
-    Stopwatch lexerStopwatch = Stopwatch()..start();
-    final tokens = await _lexer.scanTokensAsync(source);
-    lexerStopwatch.stop();
-    double lexerTime = lexerStopwatch.elapsedMicroseconds / 1000000;
-    double tokensPerSecond = tokens.length / lexerTime;
-
-    Stopwatch parserStopwatch = Stopwatch()..start();
-    final nodes = await _parser.parseAsync(tokens, source);
-    parserStopwatch.stop();
-    double parserTime = parserStopwatch.elapsedMicroseconds / 1000000;
-    double nodesPerSecond = nodes.length / parserTime;
-
-    Stopwatch evaluatorStopwatch = Stopwatch()..start();
-    final result = evaluator.evaluate(nodes);
     evaluatorStopwatch.stop();
     double evaluatorTime = evaluatorStopwatch.elapsedMicroseconds / 1000000;
 

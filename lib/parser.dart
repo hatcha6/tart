@@ -192,21 +192,6 @@ class Parser {
     return statements;
   }
 
-  Future<List<AstNode>> parseAsync(List<Token> tokens, String source) async {
-    reset();
-    this.tokens = tokens;
-    sourceCode = source; // Set the source code
-    List<Future<AstNode>> futures = [];
-
-    while (!isAtEnd()) {
-      futures.add(Future(() => declaration()));
-      // Skip to the next top-level declaration
-      synchronizeToNextDeclaration();
-    }
-
-    return await Future.wait(futures);
-  }
-
   AstNode declaration() {
     try {
       switch (peek().type) {

@@ -1145,7 +1145,6 @@ class Evaluator {
     throw EvaluationError("Unknown custom widget: ${node.tartType}");
   }
 
-  // Add this method to reset metrics
   void resetMetrics() {
     metrics.reset();
   }
