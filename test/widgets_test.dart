@@ -737,4 +737,29 @@ return flutter::Row(children: [
     expect(find.text('World1'), findsOneWidget);
     expect(find.text('World0'), findsOneWidget);
   });
+
+  testWidgets(
+      'Tart can render flutter widgets passed in as environment variables',
+      (WidgetTester tester) async {
+    final env = interpreter.createIsolatedEnvironment();
+    interpreter.setCurrentEnvironment(env);
+    const flutterWidget = Text('Hello from flutter');
+    interpreter.defineEnvironmentVariable('flutterWidget', flutterWidget,
+        environmentId: env);
+    const String tartScript = '''
+return flutterWidget;''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Hello from flutter'), findsOneWidget);
+    interpreter.removeEnvironment(env);
+  });
 }

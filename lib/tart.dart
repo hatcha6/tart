@@ -9,7 +9,6 @@ export 'evaluator.dart';
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:collection/collection.dart';
 
 import 'evaluator.dart';
 import 'lexer.dart';

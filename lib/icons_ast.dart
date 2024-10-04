@@ -17,7 +17,7 @@ class IconsInfo extends Icons {
 }
 
 class IconsAdd extends Icons {
-  const IconsAdd() : super('IconsAdd')  ;
+  const IconsAdd() : super('IconsAdd');
 }
 
 class IconsRemove extends Icons {
@@ -109,7 +109,7 @@ class IconsCheck extends Icons {
 }
 
 class IconsWarning extends Icons {
-  const IconsWarning() : super('IconsWarning')  ;
+  const IconsWarning() : super('IconsWarning');
 }
 
 class IconsError extends Icons {

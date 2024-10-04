@@ -39,11 +39,12 @@ class EvaluationMetrics {
 }
 
 class Environment {
+  final String id;
   final Environment? enclosing;
   final Map<String, dynamic> values = {};
   final Set<String> immutableVariables = {};
 
-  Environment([this.enclosing]);
+  Environment(this.id, [this.enclosing]);
 
   void define(String name, dynamic value, String keyword) {
     values[name] = value;
@@ -54,6 +55,12 @@ class Environment {
 
   dynamic get(Token name) {
     return _getFromEnvironment(name.lexeme);
+  }
+
+  String getByValue(dynamic value) {
+    final entry = values.entries.firstWhere((entry) => entry.value == value,
+        orElse: () => throw EvaluationError('No variable has value: $value.'));
+    return entry.key;
   }
 
   dynamic getValue(String name) {
@@ -92,7 +99,7 @@ class BreakException implements Exception {}
 
 class Evaluator {
   final Map<String, Environment> _environments = {};
-  final Environment _globals = Environment();
+  final Environment _globals = Environment('global');
   late Environment _currentEnvironment;
   bool _isGlobalScope = true;
 
@@ -141,7 +148,7 @@ class Evaluator {
 
   String createIsolatedEnvironment() {
     String id = _generateUniqueId();
-    _environments[id] = Environment(_globals);
+    _environments[id] = Environment(id, _globals);
     return id;
   }
 
@@ -169,6 +176,20 @@ class Evaluator {
     _currentEnvironment = _globals;
     // ignore: avoid_print
     defineGlobalFunction('print', (List<dynamic> args) => print(args.first));
+    defineGlobalFunction('expectDefined', (List<dynamic> args) {
+      if (args.isEmpty || args.length < 2 || args.length > 2) {
+        throw EvaluationError('expectDefined requires two arguments');
+      }
+      if (args[0] == null) {
+        throw EvaluationError('expectDefined: ${args[0]}, ${args[1]}');
+      }
+      try {
+        _currentEnvironment.getByValue(args[0]);
+      } catch (e) {
+        throw EvaluationError('expectDefined: ${args[0]}, ${args[1]}');
+      }
+      return true;
+    });
   }
 
   void _initializeWidgetFactories() {
@@ -547,7 +568,8 @@ class Evaluator {
 
   dynamic _evaluateIfStatement(IfStatement node) {
     Environment previousEnv = _currentEnvironment;
-    _currentEnvironment = Environment(_currentEnvironment);
+    final id = _generateUniqueId();
+    _currentEnvironment = Environment(id, _currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -566,7 +588,8 @@ class Evaluator {
 
   dynamic _evaluateWhileStatement(WhileStatement node) {
     Environment previousEnv = _currentEnvironment;
-    _currentEnvironment = Environment(_currentEnvironment);
+    final id = _generateUniqueId();
+    _currentEnvironment = Environment(id, _currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -589,7 +612,8 @@ class Evaluator {
 
   dynamic _evaluateForStatement(ForStatement node) {
     Environment previousEnv = _currentEnvironment;
-    _currentEnvironment = Environment(_currentEnvironment);
+    final id = _generateUniqueId();
+    _currentEnvironment = Environment(id, _currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -624,7 +648,8 @@ class Evaluator {
 
   dynamic _evaluateBlock(Block node) {
     Environment previousEnv = _currentEnvironment;
-    _currentEnvironment = Environment(_currentEnvironment);
+    final id = _generateUniqueId();
+    _currentEnvironment = Environment(id, _currentEnvironment);
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
@@ -731,7 +756,8 @@ class Evaluator {
 
   dynamic callFunctionDeclaration(
       FunctionDeclaration declaration, List<dynamic> arguments) {
-    Environment functionEnv = Environment(_currentEnvironment);
+    final id = _generateUniqueId();
+    Environment functionEnv = Environment(id, _currentEnvironment);
 
     for (int i = 0; i < declaration.parameters.length; i++) {
       functionEnv.define(declaration.parameters[i].lexeme, arguments[i], 'var');
@@ -787,16 +813,19 @@ class Evaluator {
 
   void defineEnvironmentVariable(String name, dynamic value,
       {String? environmentId}) {
-    _environments[environmentId]!.define(name, value, 'var');
+    _environments[environmentId ?? _currentEnvironment.id]!
+        .define(name, value, 'var');
   }
 
   void defineEnvironmentFunction(String name, Function value,
       {String? environmentId}) {
-    _environments[environmentId]!.define(name, value, 'final');
+    _environments[environmentId ?? _currentEnvironment.id]!
+        .define(name, value, 'final');
   }
 
   dynamic getEnvironmentVariable(String name, {String? environmentId}) {
-    return _environments[environmentId]!.getValue(name);
+    return _environments[environmentId ?? _currentEnvironment.id]!
+        .getValue(name);
   }
 
   flt.IconData _convertIcon(Icons node) {

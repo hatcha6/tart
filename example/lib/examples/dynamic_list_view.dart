@@ -169,10 +169,8 @@ return f:Card(
               builder: (context, tartWidgets) {
                 return Expanded(
                   child: ListView.builder(
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      return tartWidgets[index];
-                    },
+                    itemCount: tartWidgets.length,
+                    itemBuilder: (context, index) => tartWidgets[index],
                   ),
                 );
               },

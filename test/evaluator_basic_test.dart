@@ -435,4 +435,32 @@ void main() {
     expect(() => evaluator.callFunction("notAFunction", []),
         throwsA(isA<EvaluationError>()));
   });
+
+  test('Evaluates expectDefined', () {
+    final env = evaluator.createIsolatedEnvironment();
+    evaluator.setCurrentEnvironment(env);
+    expect(
+        () => evaluator.evaluateNode(const CallExpression(
+              Variable(
+                  Token(TokenType.identifier, 'expectDefined', null, 1, 1)),
+              Token(TokenType.leftParen, '(', null, 1, 1),
+              [
+                Variable(Token(TokenType.identifier, 'x', null, 1, 1)),
+                Literal('we need x')
+              ],
+            )),
+        throwsA(isA<EvaluationError>()));
+    evaluator.defineEnvironmentVariable('x', 'we have x', environmentId: env);
+    expect(
+      evaluator.evaluateNode(const CallExpression(
+        Variable(Token(TokenType.identifier, 'expectDefined', null, 1, 1)),
+        Token(TokenType.leftParen, '(', null, 1, 1),
+        [
+          Variable(Token(TokenType.identifier, 'x', null, 1, 1)),
+          Literal('we need x')
+        ],
+      )),
+      equals(true),
+    );
+  });
 }
