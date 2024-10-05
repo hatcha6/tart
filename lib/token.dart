@@ -80,7 +80,7 @@ enum TokenType {
   unknown,
   flutterWidget,
   flutterParam,
-  tartToString,
+  // tartToString,
   tartImport,
 }
 

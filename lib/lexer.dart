@@ -47,7 +47,6 @@ class Lexer {
     'true': TokenType.boolean,
     'false': TokenType.boolean,
     'null': TokenType.tartNull,
-    'toString': TokenType.tartToString,
     'import': TokenType.tartImport,
   };
 

@@ -111,7 +111,7 @@ return flutter::ElevatedButton(onPressed: () { x += 1; print('Button pressed!');
   testWidgets('Tart can correctly run setState', (WidgetTester tester) async {
     interpreter.defineGlobalVariable('x', 0);
     const String tartScript = '''
-return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: toString(x)));''';
+return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: x.toString()));''';
 
     await tester.pumpWidget(
       tart.TartProvider(
@@ -692,8 +692,8 @@ return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!');
     const String tartScript = '''
 return flutter::Row(children: [
   flutter::Text(text: 'Hello'),
-  flutter::Text(text: 'World' + toString(x)),
-  flutter::TextButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: 'Press me' + toString(index))),
+  flutter::Text(text: 'World' + x.toString()),
+  flutter::TextButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: 'Press me' + index.toString())),
 ]);''';
 
     await tester.pumpWidget(

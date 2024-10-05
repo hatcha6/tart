@@ -34,7 +34,7 @@ function createComplexWidget() {
               },
               child: flutter::Text(text: 'Increment')
             ),
-            flutter::Text(text: 'Count: ' + toString(counter)),
+            flutter::Text(text: 'Count: ' + counter.toString()),
             flutter::OutlinedButton(
               onPressed: () {
                 counter -= 1;

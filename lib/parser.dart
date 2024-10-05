@@ -242,7 +242,7 @@ class Parser {
     } catch (e) {
       synchronize();
       // ignore: avoid_print
-      print(errors);
+      print(errors.join('\n'));
       throw error(peek(), "Expected declaration/statement.");
     }
   }
@@ -723,11 +723,13 @@ class Parser {
       } else if (match([TokenType.dot])) {
         Token name =
             consume(TokenType.identifier, "Expect property name after '.'.");
-        if (name.lexeme == 'length') {
-          expr = LengthAccess(expr);
-        } else {
-          expr = MemberAccess(expr, name);
+
+        List<Token>? arguments;
+        if (check(TokenType.leftParen)) {
+          advance();
+          arguments = _parseParameterTokens();
         }
+        expr = MemberAccess(expr, name, arguments);
       } else if (match([TokenType.leftBracket])) {
         AstNode index = expression();
         consume(TokenType.rightBracket, "Expect ']' after index.");
@@ -787,12 +789,12 @@ class Parser {
       return mapLiteral();
     }
 
-    if (match([TokenType.tartToString])) {
-      consume(TokenType.leftParen, "Expect '(' after 'toString'.");
-      AstNode expr = expression();
-      consume(TokenType.rightParen, "Expect ')' after expression in toString.");
-      return ToString(expr);
-    }
+    // if (match([TokenType.tartToString])) {
+    //   consume(TokenType.leftParen, "Expect '(' after 'toString'.");
+    //   AstNode expr = expression();
+    //   consume(TokenType.rightParen, "Expect ')' after expression in toString.");
+    //   return ToString(expr);
+    // }
 
     throw error(peek(), "Expected expression.");
   }

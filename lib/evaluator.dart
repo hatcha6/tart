@@ -532,12 +532,10 @@ class Evaluator {
       Assignment() => _evaluateAssignment(node),
       AstWidget() => _evaluateWidget(node),
       EndOfFile() => null,
-      LengthAccess() => _evaluateLengthAccess(node),
       IndexAccess() => _evaluateIndexAccess(node),
       MemberAccess() => _evaluateMemberAccess(node),
       ListLiteral() => _evaluateListLiteral(node),
       BreakStatement() => throw BreakException(),
-      ToString() => _evaluateToString(node),
       ImportStatement() => _evaluateImportStatement(node),
       AstParameter() => _evaluateParameter(node),
       TryStatement() => _evaluateTryStatement(node),
@@ -1047,19 +1045,6 @@ class Evaluator {
     };
   }
 
-  dynamic _evaluateLengthAccess(LengthAccess node) {
-    dynamic object = evaluateNode(node.object);
-    if (object is String) {
-      return object.length;
-    } else if (object is List) {
-      return object.length;
-    } else if (object is Map) {
-      return object.length;
-    } else {
-      throw EvaluationError('Cannot get length of ${object.runtimeType}');
-    }
-  }
-
   dynamic _evaluateIndexAccess(IndexAccess node) {
     dynamic object = evaluateNode(node.object);
     dynamic index = evaluateNode(node.index);
@@ -1080,38 +1065,41 @@ class Evaluator {
   }
 
   dynamic _evaluateMemberAccess(MemberAccess node) {
-    dynamic object = evaluateNode(node.object);
+    final object = evaluateNode(node.object);
     String memberName = node.name.lexeme;
 
-    if (object is Map) {
-      if (object.containsKey(memberName)) {
-        return object[memberName];
-      }
+    dynamic member;
+    try {
+      member = object[memberName];
+    } catch (e) {
+      // throw EvaluationError('Member $memberName not found');
     }
 
-    // For custom objects or classes, we might need to implement a more sophisticated
-    // method to access properties or methods. This is a basic implementation.
-    if (object != null) {
-      try {
-        return (object as dynamic)[memberName];
-      } catch (e) {
-        throw EvaluationError(
-          "No $memberName method or property of ${object.runtimeType}",
-        );
+    if (node.arguments != null) {
+      if (memberName == 'toString') {
+        return object.toString();
       }
+      if (member is! Function) {
+        throw EvaluationError('Cannot call non-function member $memberName');
+      }
+      return callFunction('${object['name']}.$memberName', node.arguments!);
     }
 
-    throw EvaluationError(
-        'Cannot access member $memberName on ${object.runtimeType}');
+    switch (memberName) {
+      case 'length':
+        if (object is! Iterable && object is! String && object is! Map) {
+          throw EvaluationError('Cannot get length of ${object.runtimeType}');
+        }
+        return object.length;
+      case 'runtimeType':
+        return object.runtimeType;
+      default:
+        return member;
+    }
   }
 
   dynamic _evaluateListLiteral(ListLiteral node) {
     return node.elements.map((element) => evaluateNode(element)).toList();
-  }
-
-  String _evaluateToString(ToString node) {
-    dynamic value = evaluateNode(node.expression);
-    return value.toString();
   }
 
   List<flt.Widget> _evaluateListOfWidgets(AstNode children) {

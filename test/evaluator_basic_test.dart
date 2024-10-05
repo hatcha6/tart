@@ -182,28 +182,32 @@ void main() {
 
   test('Evaluates length access', () {
     evaluator.defineGlobalVariable('list', [1, 2, 3, 4]);
-    var expr = const LengthAccess(
+    var expr = const MemberAccess(
       Variable(Token(TokenType.identifier, 'list', null, 1, 1)),
+      Token(TokenType.identifier, 'length', null, 1, 1),
     );
     expect(evaluator.evaluateNode(expr), equals(4));
 
     evaluator.defineGlobalVariable('str', 'hello');
-    expr = const LengthAccess(
+    expr = const MemberAccess(
       Variable(Token(TokenType.identifier, 'str', null, 1, 1)),
+      Token(TokenType.identifier, 'length', null, 1, 1),
     );
     expect(evaluator.evaluateNode(expr), equals(5));
 
     evaluator.defineGlobalVariable('map', {'a': 1, 'b': 2});
-    expr = const LengthAccess(
+    expr = const MemberAccess(
       Variable(Token(TokenType.identifier, 'map', null, 1, 1)),
+      Token(TokenType.identifier, 'length', null, 1, 1),
     );
     expect(evaluator.evaluateNode(expr), equals(2));
   });
 
   test('Throws error for invalid length access', () {
     evaluator.defineGlobalVariable('num', 42);
-    const expr = LengthAccess(
+    const expr = MemberAccess(
       Variable(Token(TokenType.identifier, 'num', null, 1, 1)),
+      Token(TokenType.identifier, 'length', null, 1, 1),
     );
     expect(() => evaluator.evaluateNode(expr), throwsA(isA<EvaluationError>()));
   });

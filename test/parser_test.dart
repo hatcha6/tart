@@ -257,9 +257,10 @@ void main() {
       expect(result.length, 1);
       expect(result[0], isA<ExpressionStatement>());
       final expr = (result[0] as ExpressionStatement).expression;
-      expect(expr, isA<LengthAccess>());
-      final lengthAccess = expr as LengthAccess;
-      expect(lengthAccess.object, isA<Variable>());
+      expect(expr, isA<MemberAccess>());
+      final memberAccess = expr as MemberAccess;
+      expect(memberAccess.object, isA<Variable>());
+      expect(memberAccess.name.lexeme, 'length');
     });
   });
 }

@@ -173,8 +173,10 @@ class AnonymousFunction extends FunctionDeclaration {
 class MemberAccess extends AstNode {
   final AstNode object;
   final Token name;
+  final List<Token>? arguments;
 
-  const MemberAccess(this.object, this.name) : super('MemberAccess');
+  const MemberAccess(this.object, this.name, [this.arguments])
+      : super('MemberAccess');
 }
 
 class IndexAccess extends AstNode {
@@ -188,12 +190,6 @@ class ListLiteral extends AstNode {
   final List<AstNode> elements;
 
   const ListLiteral(this.elements) : super('ListLiteral');
-}
-
-class LengthAccess extends AstNode {
-  final AstNode object;
-
-  const LengthAccess(this.object) : super('LengthAccess');
 }
 
 class MapLiteral extends AstNode {
@@ -219,12 +215,6 @@ class BreakStatement extends AstNode {
   final Token keyword;
 
   const BreakStatement(this.keyword) : super('BreakStatement');
-}
-
-class ToString extends AstNode {
-  final AstNode expression;
-
-  const ToString(this.expression) : super('ToString');
 }
 
 class TryStatement extends AstNode {
