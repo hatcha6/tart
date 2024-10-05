@@ -540,6 +540,8 @@ class Evaluator {
       ToString() => _evaluateToString(node),
       ImportStatement() => _evaluateImportStatement(node),
       AstParameter() => _evaluateParameter(node),
+      TryStatement() => _evaluateTryStatement(node),
+      ThrowStatement() => _evaluateThrowStatement(node),
       _ => throw EvaluationError('Unknown node type: ${node.runtimeType}'),
     };
   }
@@ -1143,6 +1145,39 @@ class Evaluator {
       return factory(params);
     }
     throw EvaluationError("Unknown custom widget: ${node.tartType}");
+  }
+
+  dynamic _evaluateTryStatement(TryStatement node) {
+    try {
+      return evaluateNode(node.tryBlock);
+    } catch (e) {
+      for (var catchClause in node.catchClauses) {
+        if (catchClause.exceptionType == null ||
+            e.runtimeType.toString() == catchClause.exceptionType!.lexeme) {
+          Environment catchEnv = Environment('catch', _currentEnvironment);
+          if (catchClause.exceptionVariable != null) {
+            catchEnv.define(catchClause.exceptionVariable!.lexeme, e, 'var');
+          }
+          Environment previousEnv = _currentEnvironment;
+          _currentEnvironment = catchEnv;
+          try {
+            return evaluateNode(catchClause.catchBlock);
+          } finally {
+            _currentEnvironment = previousEnv;
+          }
+        }
+      }
+      rethrow; // If no matching catch clause is found, rethrow the exception
+    } finally {
+      if (node.finallyBlock != null) {
+        evaluateNode(node.finallyBlock!);
+      }
+    }
+  }
+
+  dynamic _evaluateThrowStatement(ThrowStatement node) {
+    dynamic value = evaluateNode(node.expression);
+    throw value;
   }
 
   void resetMetrics() {

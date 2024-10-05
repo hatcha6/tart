@@ -12,6 +12,18 @@ sealed class AstNode {
   const AstNode(this.tartType);
 }
 
+class AstList extends AstNode {
+  final List<AstNode> nodes;
+
+  const AstList(this.nodes) : super('AstList');
+}
+
+class AstObject extends AstNode {
+  final Map<String, AstNode> properties;
+
+  const AstObject(this.properties) : super('AstObject');
+}
+
 class ImportStatement extends AstNode {
   final Token keyword;
   final String path;
@@ -213,4 +225,28 @@ class ToString extends AstNode {
   final AstNode expression;
 
   const ToString(this.expression) : super('ToString');
+}
+
+class TryStatement extends AstNode {
+  final AstNode tryBlock;
+  final List<CatchClause> catchClauses;
+  final AstNode? finallyBlock;
+
+  const TryStatement(this.tryBlock, this.catchClauses, this.finallyBlock)
+      : super('TryStatement');
+}
+
+class CatchClause extends AstNode {
+  final Token? exceptionType;
+  final Token? exceptionVariable;
+  final AstNode catchBlock;
+
+  const CatchClause(this.exceptionType, this.exceptionVariable, this.catchBlock)
+      : super('CatchClause');
+}
+
+class ThrowStatement extends AstNode {
+  final AstNode expression;
+
+  const ThrowStatement(this.expression) : super('ThrowStatement');
 }

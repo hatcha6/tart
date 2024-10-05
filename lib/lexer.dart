@@ -2,7 +2,6 @@ library tart;
 
 import 'dart:collection';
 import 'token.dart';
-import 'dart:isolate';
 import 'dart:typed_data';
 
 class Lexer {

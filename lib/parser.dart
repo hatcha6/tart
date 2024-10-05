@@ -2,7 +2,6 @@ library tart;
 
 import 'token.dart';
 import 'ast.dart';
-import 'dart:async';
 
 class Parser {
   List<Token> tokens = const [];
@@ -233,6 +232,10 @@ class Parser {
         case TokenType.tartImport:
           advance();
           return importDeclaration();
+        case TokenType.tartTry:
+          return tryStatement();
+        case TokenType.tartThrow:
+          return throwStatement();
         default:
           return statement();
       }
@@ -908,6 +911,42 @@ class Parser {
         consume(TokenType.string, "Expect string after 'import'.").lexeme;
     consume(TokenType.semicolon, "Expect ';' after import statement.");
     return ImportStatement(importToken, path);
+  }
+
+  AstNode tryStatement() {
+    consume(TokenType.tartTry, "Expect 'try' keyword.");
+    AstNode tryBlock = block();
+    List<CatchClause> catchClauses = [];
+    AstNode? finallyBlock;
+
+    while (match([TokenType.tartCatch])) {
+      Token? exceptionType;
+      Token? exceptionVariable;
+      if (check(TokenType.identifier)) {
+        exceptionType = advance();
+        if (check(TokenType.identifier)) {
+          exceptionVariable = advance();
+        }
+      }
+      consume(TokenType.leftBrace, "Expect '{' before catch block.");
+      AstNode catchBlock = block();
+      catchClauses
+          .add(CatchClause(exceptionType, exceptionVariable, catchBlock));
+    }
+
+    if (match([TokenType.tartFinally])) {
+      consume(TokenType.leftBrace, "Expect '{' before finally block.");
+      finallyBlock = block();
+    }
+
+    return TryStatement(tryBlock, catchClauses, finallyBlock);
+  }
+
+  AstNode throwStatement() {
+    consume(TokenType.tartThrow, "Expect 'throw' keyword.");
+    final expr = expression();
+    consume(TokenType.semicolon, "Expect ';' after throw statement.");
+    return ThrowStatement(expr);
   }
 }
 

@@ -463,4 +463,109 @@ void main() {
       equals(true),
     );
   });
+
+  test('Evaluates try statement', () {
+    // Test successful try block execution
+    var tryStmt = const TryStatement(
+      Block([
+        ExpressionStatement(Assignment(
+          Token(TokenType.identifier, "x", null, 1, 1),
+          Token(TokenType.assign, "=", null, 1, 1),
+          Literal(10),
+        )),
+      ]),
+      [
+        CatchClause(null, null, Block([])),
+      ],
+      Block([
+        ExpressionStatement(Assignment(
+          Token(TokenType.identifier, "y", null, 1, 1),
+          Token(TokenType.assign, "=", null, 1, 1),
+          Literal(20),
+        )),
+      ]),
+    );
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "x", null, 1, 1),
+      Literal(0),
+    ));
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "y", null, 1, 1),
+      Literal(0),
+    ));
+    evaluator.evaluateNode(tryStmt);
+    expect(evaluator.getVariable('x'), equals(10));
+    expect(evaluator.getVariable('y'), equals(20));
+
+    // Test exception caught in catch block
+    tryStmt = const TryStatement(
+      Block([
+        ThrowStatement(Literal("Test exception")),
+      ]),
+      [
+        CatchClause(
+          null,
+          Token(TokenType.identifier, "e", null, 1, 1),
+          Block([
+            ExpressionStatement(Assignment(
+              Token(TokenType.identifier, "caught", null, 1, 1),
+              Token(TokenType.assign, "=", null, 1, 1),
+              Variable(Token(TokenType.identifier, "e", null, 1, 1)),
+            )),
+          ]),
+        ),
+      ],
+      null,
+    );
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "caught", null, 1, 1),
+      Literal(null),
+    ));
+    evaluator.evaluateNode(tryStmt);
+    expect(evaluator.getVariable('caught'), equals("Test exception"));
+
+    // Test finally block execution after exception
+    tryStmt = const TryStatement(
+      Block([
+        ThrowStatement(Literal("Another exception")),
+      ]),
+      [
+        CatchClause(null, null, Block([])),
+      ],
+      Block([
+        ExpressionStatement(Assignment(
+          Token(TokenType.identifier, "finallyExecuted", null, 1, 1),
+          Token(TokenType.assign, "=", null, 1, 1),
+          Literal(true),
+        )),
+      ]),
+    );
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "finallyExecuted", null, 1, 1),
+      Literal(false),
+    ));
+    evaluator.evaluateNode(tryStmt);
+    expect(evaluator.getVariable('finallyExecuted'), equals(true));
+
+    // Test exception propagation when no matching catch
+    tryStmt = const TryStatement(
+      Block([
+        ThrowStatement(Literal("Uncaught exception")),
+      ]),
+      [
+        CatchClause(
+          Token(TokenType.identifier, "TypeError", null, 1, 1),
+          null,
+          Block([]),
+        ),
+      ],
+      null,
+    );
+    expect(
+        () => evaluator.evaluateNode(tryStmt), throwsA("Uncaught exception"));
+  });
 }
