@@ -259,10 +259,11 @@ class Evaluator {
     };
     _widgetFactories[ElevatedButton] = (node) {
       node as ElevatedButton;
+      final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.ElevatedButton(
         onPressed: () => callFunctionDeclaration(
-          node.onPressed,
-          node.onPressed.parameters,
+          onPressed!,
+          onPressed.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -293,11 +294,12 @@ class Evaluator {
     };
     _widgetFactories[ListViewBuilder] = (node) {
       node as ListViewBuilder;
+      final itemBuilder = getFunctionDeclaration(node.itemBuilder);
       return flt.ListView.builder(
         itemBuilder: (context, index) {
           final previousEnvironment = _currentEnvironment;
           _currentEnvironment.define('index', index, 'final');
-          final result = callFunctionDeclaration(node.itemBuilder, [index]);
+          final result = callFunctionDeclaration(itemBuilder!, [index]);
           _currentEnvironment = previousEnvironment;
           return result;
         },
@@ -306,11 +308,12 @@ class Evaluator {
     };
     _widgetFactories[GridViewBuilder] = (node) {
       node as GridViewBuilder;
+      final itemBuilder = getFunctionDeclaration(node.itemBuilder);
       return flt.GridView.builder(
         itemBuilder: (context, index) {
           final previousEnvironment = _currentEnvironment;
           _currentEnvironment.define('index', index, 'final');
-          final result = callFunctionDeclaration(node.itemBuilder, [index]);
+          final result = callFunctionDeclaration(itemBuilder!, [index]);
           _currentEnvironment = previousEnvironment;
           return result;
         },
@@ -322,27 +325,28 @@ class Evaluator {
     };
     _widgetFactories[TextField] = (node) {
       node as TextField;
+      final onSubmitted = getFunctionDeclaration(node.onSubmitted);
+      final onChanged = getFunctionDeclaration(node.onChanged);
       return flt.TextField(
         decoration:
             node.decoration != null ? evaluateNode(node.decoration!) : null,
-        onSubmitted: node.onSubmitted != null
-            ? (value) => callFunctionDeclaration(node.onSubmitted!, [value])
+        onSubmitted: onSubmitted != null
+            ? (value) => callFunctionDeclaration(onSubmitted, [value])
             : null,
-        onChanged: node.onChanged != null
-            ? (value) => callFunctionDeclaration(node.onChanged!, [value])
+        onChanged: onChanged != null
+            ? (value) => callFunctionDeclaration(onChanged, [value])
             : null,
       );
     };
     _widgetFactories[ListTile] = (node) {
       node as ListTile;
+      final onTap = getFunctionDeclaration(node.onTap);
       return flt.ListTile(
         leading: node.leading != null ? evaluateNode(node.leading!) : null,
         title: node.title != null ? evaluateNode(node.title!) : null,
         subtitle: node.subtitle != null ? evaluateNode(node.subtitle!) : null,
         trailing: node.trailing != null ? evaluateNode(node.trailing!) : null,
-        onTap: node.onTap != null
-            ? () => callFunctionDeclaration(node.onTap!, [])
-            : null,
+        onTap: onTap != null ? () => callFunctionDeclaration(onTap, []) : null,
       );
     };
     _widgetFactories[Stack] = (node) {
@@ -356,20 +360,22 @@ class Evaluator {
     };
     _widgetFactories[TextButton] = (node) {
       node as TextButton;
+      final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.TextButton(
         onPressed: () => callFunctionDeclaration(
-          node.onPressed,
-          node.onPressed.parameters,
+          onPressed!,
+          onPressed.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
     };
     _widgetFactories[OutlinedButton] = (node) {
       node as OutlinedButton;
+      final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.OutlinedButton(
         onPressed: () => callFunctionDeclaration(
-          node.onPressed,
-          node.onPressed.parameters,
+          onPressed!,
+          onPressed.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -420,10 +426,11 @@ class Evaluator {
     };
     _widgetFactories[FloatingActionButton] = (node) {
       node as FloatingActionButton;
+      final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.FloatingActionButton(
         onPressed: () => callFunctionDeclaration(
-          node.onPressed,
-          node.onPressed.parameters,
+          onPressed!,
+          onPressed.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -510,6 +517,19 @@ class Evaluator {
       }
     }
     return result;
+  }
+
+  FunctionDeclaration? getFunctionDeclaration(AstNode? node) {
+    final value = evaluateNode(node ?? const Literal(null));
+    if (value == null) {
+      return null;
+    }
+    if (value is FunctionDeclaration ||
+        value is AnonymousFunction ||
+        value is Function) {
+      return value;
+    }
+    throw EvaluationError('Expected function declaration, got $value');
   }
 
   dynamic evaluateNode(AstNode node) {

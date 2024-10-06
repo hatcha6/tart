@@ -97,7 +97,7 @@ class Expanded extends AstWidget {
 
 class ElevatedButton extends AstWidget {
   final AstWidget child;
-  final FunctionDeclaration onPressed;
+  final AstNode onPressed;
 
   const ElevatedButton(this.child, this.onPressed) : super('ElevatedButton');
 }
@@ -130,7 +130,7 @@ class GridView extends AstWidget {
 }
 
 class ListViewBuilder extends AstWidget {
-  final FunctionDeclaration itemBuilder;
+  final AstNode itemBuilder;
   final AstNode itemCount;
   final AstNode? shrinkWrap;
   final AstNode? physics;
@@ -141,7 +141,7 @@ class ListViewBuilder extends AstWidget {
 }
 
 class GridViewBuilder extends AstWidget {
-  final FunctionDeclaration itemBuilder;
+  final AstNode itemBuilder;
   final AstNode itemCount;
   final AstNode maxCrossAxisExtent;
   final AstNode? shrinkWrap;
@@ -158,8 +158,8 @@ class GridViewBuilder extends AstWidget {
 
 class TextField extends AstWidget {
   final AstNode? decoration;
-  final FunctionDeclaration? onSubmitted;
-  final FunctionDeclaration? onChanged;
+  final AstNode? onSubmitted;
+  final AstNode? onChanged;
 
   const TextField([this.decoration, this.onSubmitted, this.onChanged])
       : super('TextField');
@@ -170,7 +170,7 @@ class ListTile extends AstWidget {
   final AstNode? title;
   final AstNode? subtitle;
   final AstNode? trailing;
-  final FunctionDeclaration? onTap;
+  final AstNode? onTap;
 
   const ListTile(
       [this.leading, this.title, this.subtitle, this.trailing, this.onTap])
@@ -186,14 +186,14 @@ class Stack extends AstWidget {
 
 class TextButton extends AstWidget {
   final AstWidget child;
-  final FunctionDeclaration onPressed;
+  final AstNode onPressed;
 
   const TextButton(this.child, this.onPressed) : super('TextButton');
 }
 
 class OutlinedButton extends AstWidget {
   final AstWidget child;
-  final FunctionDeclaration onPressed;
+  final AstNode onPressed;
 
   const OutlinedButton(this.child, this.onPressed) : super('OutlinedButton');
 }
@@ -245,7 +245,7 @@ class Scaffold extends AstWidget {
 
 class FloatingActionButton extends AstWidget {
   final AstWidget child;
-  final FunctionDeclaration onPressed;
+  final AstNode onPressed;
 
   const FloatingActionButton(this.child, this.onPressed)
       : super('FloatingActionButton');

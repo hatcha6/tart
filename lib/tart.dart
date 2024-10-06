@@ -60,7 +60,6 @@ class Tart {
   final Parser parser;
   final Lexer lexer;
   final String Function(String filePath)? _importHandler;
-
   EvaluationMetrics get metrics => evaluator.metrics;
 
   Tart(
