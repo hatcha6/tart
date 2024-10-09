@@ -261,9 +261,9 @@ class Evaluator {
       node as ElevatedButton;
       final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.ElevatedButton(
-        onPressed: () => callFunctionDeclaration(
+        onPressed: () => _callClosure(
           onPressed!,
-          onPressed.parameters,
+          onPressed.declaration.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -299,7 +299,7 @@ class Evaluator {
         itemBuilder: (context, index) {
           final previousEnvironment = _currentEnvironment;
           _currentEnvironment.define('index', index, 'final');
-          final result = callFunctionDeclaration(itemBuilder!, [index]);
+          final result = _callClosure(itemBuilder!, [index]);
           _currentEnvironment = previousEnvironment;
           return result;
         },
@@ -313,7 +313,7 @@ class Evaluator {
         itemBuilder: (context, index) {
           final previousEnvironment = _currentEnvironment;
           _currentEnvironment.define('index', index, 'final');
-          final result = callFunctionDeclaration(itemBuilder!, [index]);
+          final result = _callClosure(itemBuilder!, [index]);
           _currentEnvironment = previousEnvironment;
           return result;
         },
@@ -331,10 +331,10 @@ class Evaluator {
         decoration:
             node.decoration != null ? evaluateNode(node.decoration!) : null,
         onSubmitted: onSubmitted != null
-            ? (value) => callFunctionDeclaration(onSubmitted, [value])
+            ? (value) => _callClosure(onSubmitted, [value])
             : null,
         onChanged: onChanged != null
-            ? (value) => callFunctionDeclaration(onChanged, [value])
+            ? (value) => _callClosure(onChanged, [value])
             : null,
       );
     };
@@ -346,7 +346,7 @@ class Evaluator {
         title: node.title != null ? evaluateNode(node.title!) : null,
         subtitle: node.subtitle != null ? evaluateNode(node.subtitle!) : null,
         trailing: node.trailing != null ? evaluateNode(node.trailing!) : null,
-        onTap: onTap != null ? () => callFunctionDeclaration(onTap, []) : null,
+        onTap: onTap != null ? () => _callClosure(onTap, []) : null,
       );
     };
     _widgetFactories[Stack] = (node) {
@@ -362,9 +362,9 @@ class Evaluator {
       node as TextButton;
       final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.TextButton(
-        onPressed: () => callFunctionDeclaration(
+        onPressed: () => _callClosure(
           onPressed!,
-          onPressed.parameters,
+          onPressed.declaration.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -373,9 +373,9 @@ class Evaluator {
       node as OutlinedButton;
       final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.OutlinedButton(
-        onPressed: () => callFunctionDeclaration(
+        onPressed: () => _callClosure(
           onPressed!,
-          onPressed.parameters,
+          onPressed.declaration.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -428,9 +428,9 @@ class Evaluator {
       node as FloatingActionButton;
       final onPressed = getFunctionDeclaration(node.onPressed);
       return flt.FloatingActionButton(
-        onPressed: () => callFunctionDeclaration(
+        onPressed: () => _callClosure(
           onPressed!,
-          onPressed.parameters,
+          onPressed.declaration.parameters,
         ),
         child: _evaluateWidget(node.child),
       );
@@ -519,14 +519,12 @@ class Evaluator {
     return result;
   }
 
-  FunctionDeclaration? getFunctionDeclaration(AstNode? node) {
+  Closure? getFunctionDeclaration(AstNode? node) {
     final value = evaluateNode(node ?? const Literal(null));
     if (value == null) {
       return null;
     }
-    if (value is FunctionDeclaration ||
-        value is AnonymousFunction ||
-        value is Function) {
+    if (value is Closure || value is Function) {
       return value;
     }
     throw EvaluationError('Expected function declaration, got $value');
@@ -577,8 +575,10 @@ class Evaluator {
   }
 
   dynamic _evaluateFunctionDeclaration(FunctionDeclaration node) {
-    _currentEnvironment.define(node.name.lexeme, node, 'final');
-    return node;
+    // Create a closure that captures the current environment
+    Closure closure = Closure(node, _currentEnvironment);
+    _currentEnvironment.define(node.name.lexeme, closure, 'final');
+    return closure;
   }
 
   dynamic _evaluateImportStatement(ImportStatement node) {
@@ -586,34 +586,34 @@ class Evaluator {
     return evaluate(importedAst);
   }
 
-  dynamic _evaluateIfStatement(IfStatement node) {
+  T _withInnerScope<T>(String scopeId, Function() body) {
     Environment previousEnv = _currentEnvironment;
-    final id = _generateUniqueId();
-    _currentEnvironment = Environment(id, _currentEnvironment);
+    final newEnv = Environment(scopeId, _currentEnvironment);
+    _currentEnvironment = newEnv;
     bool wasGlobalScope = _isGlobalScope;
     _isGlobalScope = false;
 
     try {
+      return body() as T;
+    } finally {
+      _currentEnvironment = previousEnv;
+      _isGlobalScope = wasGlobalScope;
+    }
+  }
+
+  dynamic _evaluateIfStatement(IfStatement node) {
+    return _withInnerScope('if', () {
       if (_isTruthy(evaluateNode(node.condition))) {
         return evaluateNode(node.thenBranch);
       } else if (node.elseBranch != null) {
         return evaluateNode(node.elseBranch!);
       }
-    } finally {
-      _currentEnvironment = previousEnv;
-      _isGlobalScope = wasGlobalScope;
-    }
-    return null;
+      return null;
+    });
   }
 
   dynamic _evaluateWhileStatement(WhileStatement node) {
-    Environment previousEnv = _currentEnvironment;
-    final id = _generateUniqueId();
-    _currentEnvironment = Environment(id, _currentEnvironment);
-    bool wasGlobalScope = _isGlobalScope;
-    _isGlobalScope = false;
-
-    try {
+    return _withInnerScope('while', () {
       while (_isTruthy(evaluateNode(node.condition))) {
         try {
           evaluateNode(node.body);
@@ -621,23 +621,12 @@ class Evaluator {
           break;
         }
       }
-    } on BreakException {
-      // Ignore break at the loop level
-    } finally {
-      _currentEnvironment = previousEnv;
-      _isGlobalScope = wasGlobalScope;
-    }
-    return null;
+      return null;
+    });
   }
 
   dynamic _evaluateForStatement(ForStatement node) {
-    Environment previousEnv = _currentEnvironment;
-    final id = _generateUniqueId();
-    _currentEnvironment = Environment(id, _currentEnvironment);
-    bool wasGlobalScope = _isGlobalScope;
-    _isGlobalScope = false;
-
-    try {
+    return _withInnerScope('for', () {
       if (node.initializer != null) {
         evaluateNode(node.initializer!);
       }
@@ -652,13 +641,8 @@ class Evaluator {
           break;
         }
       }
-    } on BreakException {
-      // Ignore break at the loop level
-    } finally {
-      _currentEnvironment = previousEnv;
-      _isGlobalScope = wasGlobalScope;
-    }
-    return null;
+      return null;
+    });
   }
 
   dynamic _evaluateReturnStatement(ReturnStatement node) {
@@ -667,22 +651,13 @@ class Evaluator {
   }
 
   dynamic _evaluateBlock(Block node) {
-    Environment previousEnv = _currentEnvironment;
-    final id = _generateUniqueId();
-    _currentEnvironment = Environment(id, _currentEnvironment);
-    bool wasGlobalScope = _isGlobalScope;
-    _isGlobalScope = false;
-
-    dynamic value;
-    try {
+    return _withInnerScope('block', () {
+      dynamic value;
       for (var statement in node.statements) {
         value = evaluateNode(statement);
       }
-    } finally {
-      _currentEnvironment = previousEnv;
-      _isGlobalScope = wasGlobalScope;
-    }
-    return value;
+      return value;
+    });
   }
 
   dynamic _evaluateBinaryExpression(BinaryExpression node) {
@@ -731,8 +706,8 @@ class Evaluator {
     List<dynamic> arguments =
         node.arguments.map((arg) => evaluateNode(arg)).toList();
 
-    if (callee is FunctionDeclaration) {
-      return callFunctionDeclaration(callee, arguments);
+    if (callee is Closure) {
+      return _callClosure(callee, arguments);
     } else if (callee is Function) {
       return callee(arguments);
     }
@@ -771,31 +746,24 @@ class Evaluator {
   }
 
   dynamic _evaluateAnonymousFunction(AnonymousFunction node) {
-    return node;
+    // Create a closure that captures the current environment
+    return Closure(node, _currentEnvironment);
   }
 
   dynamic callFunctionDeclaration(
       FunctionDeclaration declaration, List<dynamic> arguments) {
-    final id = _generateUniqueId();
-    Environment functionEnv = Environment(id, _currentEnvironment);
+    return _withInnerScope('function', () {
+      for (int i = 0; i < declaration.parameters.length; i++) {
+        _currentEnvironment.define(
+            declaration.parameters[i].lexeme, arguments[i], 'var');
+      }
 
-    for (int i = 0; i < declaration.parameters.length; i++) {
-      functionEnv.define(declaration.parameters[i].lexeme, arguments[i], 'var');
-    }
-
-    Environment previousEnv = _currentEnvironment;
-    _currentEnvironment = functionEnv;
-    bool wasGlobalScope = _isGlobalScope;
-    _isGlobalScope = false;
-
-    try {
-      return evaluateNode(declaration.body);
-    } on ReturnException catch (e) {
-      return e.value;
-    } finally {
-      _currentEnvironment = previousEnv;
-      _isGlobalScope = wasGlobalScope;
-    }
+      try {
+        return evaluateNode(declaration.body);
+      } on ReturnException catch (e) {
+        return e.value;
+      }
+    });
   }
 
   bool _isTruthy(dynamic value) {
@@ -806,8 +774,8 @@ class Evaluator {
 
   dynamic callFunction(String functionName, List arguments) {
     final function = _currentEnvironment.getValue(functionName);
-    if (function is FunctionDeclaration) {
-      return callFunctionDeclaration(function, arguments);
+    if (function is Closure) {
+      return _callClosure(function, arguments);
     } else if (function is Function) {
       return function(arguments);
     }
@@ -1162,17 +1130,13 @@ class Evaluator {
       for (var catchClause in node.catchClauses) {
         if (catchClause.exceptionType == null ||
             e.runtimeType.toString() == catchClause.exceptionType!.lexeme) {
-          Environment catchEnv = Environment('catch', _currentEnvironment);
-          if (catchClause.exceptionVariable != null) {
-            catchEnv.define(catchClause.exceptionVariable!.lexeme, e, 'var');
-          }
-          Environment previousEnv = _currentEnvironment;
-          _currentEnvironment = catchEnv;
-          try {
+          return _withInnerScope('catch', () {
+            if (catchClause.exceptionVariable != null) {
+              _currentEnvironment.define(
+                  catchClause.exceptionVariable!.lexeme, e, 'var');
+            }
             return evaluateNode(catchClause.catchBlock);
-          } finally {
-            _currentEnvironment = previousEnv;
-          }
+          });
         }
       }
       rethrow; // If no matching catch clause is found, rethrow the exception
@@ -1191,4 +1155,33 @@ class Evaluator {
   void resetMetrics() {
     metrics.reset();
   }
+
+  dynamic _callClosure(Closure closure, List<dynamic> arguments) {
+    return _withInnerScope('function', () {
+      Environment functionEnv = Environment('function', closure.environment);
+      Environment previousEnv = _currentEnvironment;
+      _currentEnvironment = functionEnv;
+
+      try {
+        FunctionDeclaration funcDecl = closure.declaration;
+        for (int i = 0; i < funcDecl.parameters.length; i++) {
+          _currentEnvironment.define(
+              funcDecl.parameters[i].lexeme, arguments[i], 'var');
+        }
+
+        return evaluateNode(funcDecl.body);
+      } on ReturnException catch (e) {
+        return e.value;
+      } finally {
+        _currentEnvironment = previousEnv;
+      }
+    });
+  }
+}
+
+class Closure {
+  final FunctionDeclaration declaration;
+  final Environment environment;
+
+  Closure(this.declaration, this.environment);
 }

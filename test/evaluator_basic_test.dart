@@ -572,4 +572,126 @@ void main() {
     expect(
         () => evaluator.evaluateNode(tryStmt), throwsA("Uncaught exception"));
   });
+
+  test('Lexical scoping', () {
+    // Test global scope
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "globalVar", null, 1, 1),
+      Literal(10),
+    ));
+    expect(evaluator.getVariable('globalVar'), equals(10));
+
+    // Test local scope in a block
+    evaluator.evaluateNode(const Block([
+      VariableDeclaration(
+        Token(TokenType.tartVar, "var", null, 1, 1),
+        Token(TokenType.identifier, "localVar", null, 1, 1),
+        Literal(20),
+      ),
+    ]));
+    expect(() => evaluator.getVariable('localVar'),
+        throwsA(isA<EvaluationError>()));
+
+    // Test nested scopes
+    evaluator.evaluateNode(const Block([
+      VariableDeclaration(
+        Token(TokenType.tartVar, "var", null, 1, 1),
+        Token(TokenType.identifier, "outerVar", null, 1, 1),
+        Literal(30),
+      ),
+      Block([
+        VariableDeclaration(
+          Token(TokenType.tartVar, "var", null, 1, 1),
+          Token(TokenType.identifier, "innerVar", null, 1, 1),
+          Literal(40),
+        ),
+      ]),
+    ]));
+    expect(() => evaluator.getVariable('outerVar'),
+        throwsA(isA<EvaluationError>()));
+    expect(() => evaluator.getVariable('innerVar'),
+        throwsA(isA<EvaluationError>()));
+
+    // Test variable shadowing
+    evaluator.evaluateNode(const Block([
+      VariableDeclaration(
+        Token(TokenType.tartVar, "var", null, 1, 1),
+        Token(TokenType.identifier, "shadowedVar", null, 1, 1),
+        Literal(50),
+      ),
+      Block([
+        VariableDeclaration(
+          Token(TokenType.tartVar, "var", null, 1, 1),
+          Token(TokenType.identifier, "shadowedVar", null, 1, 1),
+          Literal(60),
+        ),
+      ]),
+    ]));
+
+    // Test function scope
+    evaluator.evaluateNode(const FunctionDeclaration(
+      Token(TokenType.identifier, "testFunction", null, 1, 1),
+      [],
+      Block([
+        VariableDeclaration(
+          Token(TokenType.tartVar, "var", null, 1, 1),
+          Token(TokenType.identifier, "functionVar", null, 1, 1),
+          Literal(70),
+        ),
+      ]),
+    ));
+    evaluator.evaluateNode(const CallExpression(
+      Variable(Token(TokenType.identifier, "testFunction", null, 1, 1)),
+      Token(TokenType.leftParen, "(", null, 1, 1),
+      [],
+    ));
+    expect(() => evaluator.getVariable('functionVar'),
+        throwsA(isA<EvaluationError>()));
+
+    // Test closure
+    evaluator.evaluateNode(const FunctionDeclaration(
+      Token(TokenType.identifier, "createClosure", null, 1, 1),
+      [],
+      Block([
+        VariableDeclaration(
+          Token(TokenType.tartVar, "var", null, 1, 1),
+          Token(TokenType.identifier, "closureVar", null, 1, 1),
+          Literal(80),
+        ),
+        FunctionDeclaration(
+          Token(TokenType.identifier, "innerFunction", null, 1, 1),
+          [],
+          Block([
+            ReturnStatement(
+              Token(TokenType.tartReturn, "return", null, 1, 1),
+              Variable(Token(TokenType.identifier, "closureVar", null, 1, 1)),
+            ),
+          ]),
+        ),
+        ReturnStatement(
+          Token(TokenType.tartReturn, "return", null, 1, 1),
+          Variable(Token(TokenType.identifier, "innerFunction", null, 1, 1)),
+        ),
+      ]),
+    ));
+    evaluator.evaluateNode(const VariableDeclaration(
+      Token(TokenType.tartVar, "var", null, 1, 1),
+      Token(TokenType.identifier, "closure", null, 1, 1),
+      CallExpression(
+        Variable(Token(TokenType.identifier, "createClosure", null, 1, 1)),
+        Token(TokenType.leftParen, "(", null, 1, 1),
+        [],
+      ),
+    ));
+    final closureResult = evaluator.evaluateNode(const CallExpression(
+      Variable(Token(TokenType.identifier, "closure", null, 1, 1)),
+      Token(TokenType.leftParen, "(", null, 1, 1),
+      [],
+    ));
+    expect(closureResult, equals(80));
+
+    // Test that global variables are accessible everywhere
+    expect(evaluator.getVariable('globalVar'), equals(10));
+  });
 }
