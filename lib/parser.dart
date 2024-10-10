@@ -178,6 +178,7 @@ class Parser {
     'SingleChildScrollView': (params) => SingleChildScrollView(
           params['child'],
         ),
+    'StatefulBuilder': (params) => StatefulBuilder(params['builder']),
   };
 
   List<AstNode> parse(List<Token> tokens, String source) {

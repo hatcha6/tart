@@ -762,4 +762,68 @@ return flutterWidget;''';
     expect(find.text('Hello from flutter'), findsOneWidget);
     interpreter.removeEnvironment(env);
   });
+
+  testWidgets('Tart can render StatefulBuilder', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('x', 0);
+    const String tartScript = '''
+return flutter::StatefulBuilder(
+  builder: (setState) {
+    return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: 'Press me' + x.toString()));
+  },
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Press me0'), findsOneWidget);
+
+    await tester.tap(find.text('Press me0'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Press me1'), findsOneWidget);
+  });
+
+  testWidgets('Tart can render StatefulBuilder', (WidgetTester tester) async {
+    interpreter.defineGlobalVariable('x', 0);
+    interpreter.defineGlobalVariable('y', 0);
+    const String tartScript = '''
+return f:Column(
+  children: [
+flutter::StatefulBuilder(
+  builder: (setState) {
+    return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: 'Press mex' + x.toString()));
+  },
+),flutter::StatefulBuilder(
+  builder: (setState) {
+    return flutter::ElevatedButton(onPressed: () { y += 1; setState(); }, child: flutter::Text(text: 'Press mey' + y.toString()));
+  },
+)
+  ]
+);''';
+
+    final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
+    print(benchmark);
+    final widget = result as Widget;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: widget),
+      ),
+    );
+
+    expect(find.text('Press mex0'), findsOneWidget);
+    expect(find.text('Press mey0'), findsOneWidget);
+    await tester.tap(find.text('Press mey0'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Press mey1'), findsOneWidget);
+    expect(find.text('Press mex0'), findsOneWidget);
+  });
 }

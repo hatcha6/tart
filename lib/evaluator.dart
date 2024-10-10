@@ -456,6 +456,20 @@ class Evaluator {
         child: _evaluateWidget(node.child!),
       );
     };
+    _widgetFactories[StatefulBuilder] = (node) {
+      node as StatefulBuilder;
+      final builder = getFunctionDeclaration(node.builder);
+      return flt.StatefulBuilder(
+        builder: (context, setState) {
+          // Why do we need to pass params?
+          tartSetState(params) {
+            setState(() {});
+          }
+
+          return _callClosure(builder!, [tartSetState]);
+        },
+      );
+    };
   }
 
   void _initializeParameterFactories() {

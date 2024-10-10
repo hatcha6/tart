@@ -275,3 +275,9 @@ class Positioned extends AstWidget {
   const Positioned([this.left, this.top, this.right, this.bottom, this.child])
       : super('Positioned');
 }
+
+class StatefulBuilder extends AstWidget {
+  final AstNode builder;
+
+  const StatefulBuilder(this.builder) : super('StatefulBuilder');
+}
