@@ -20,6 +20,7 @@ enum TokenType {
   tartAssert,
   tartConst,
   tartFinal,
+  tartIn,
   tartVar,
   tartLate,
   required,

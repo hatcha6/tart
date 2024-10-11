@@ -26,6 +26,9 @@ void main() {
               child: Text(params['text'] as String),
             ),
       },
+      customIcons: {
+        'IconsCustom': Icons.favorite,
+      },
     );
   });
 
@@ -34,8 +37,8 @@ void main() {
       const String tartScript =
           '''return flutter::Text(text: 'Hello from Tart!');''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -66,8 +69,8 @@ void main() {
               ),
             );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -82,16 +85,32 @@ void main() {
 
       expect(find.text('Hello from Tart!'), findsOneWidget);
     });
+
+    testWidgets('renders a custom icon', (WidgetTester tester) async {
+      const String tartScript =
+          '''return flutter::Icon(icon: p:IconsCustom());''';
+
+      final result = interpreter.run(tartScript);
+
+      final widget = result as Widget;
+
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: widget)),
+      );
+
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+    });
   });
 
   group('Interactive Widgets', () {
-    testWidgets('renders a functional ElevatedButton', (WidgetTester tester) async {
+    testWidgets('renders a functional ElevatedButton',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('x', 0);
       const String tartScript = '''
 return flutter::ElevatedButton(onPressed: () { x += 1; print('Button pressed!'); }, child: flutter::Text(text: 'Press me'));''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -110,7 +129,8 @@ return flutter::ElevatedButton(onPressed: () { x += 1; print('Button pressed!');
       expect(interpreter.getGlobalVariable('x'), equals(1));
     });
 
-    testWidgets('updates state correctly with setState', (WidgetTester tester) async {
+    testWidgets('updates state correctly with setState',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('x', 0);
       const String tartScript = '''
 return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flutter::Text(text: x.toString()));''';
@@ -141,8 +161,8 @@ return flutter::ElevatedButton(onPressed: () { x += 1; setState(); }, child: flu
       const String tartScript = '''
 return flutter::TextButton(onPressed: () { x += 1; print('Button pressed!'); }, child: flutter::Text(text: 'Press me'));''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -161,13 +181,14 @@ return flutter::TextButton(onPressed: () { x += 1; print('Button pressed!'); }, 
       expect(interpreter.getGlobalVariable('x'), equals(1));
     });
 
-    testWidgets('renders a functional OutlinedButton', (WidgetTester tester) async {
+    testWidgets('renders a functional OutlinedButton',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('x', 0);
       const String tartScript = '''
 return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!'); }, child: flutter::Text(text: 'Press me'));''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -188,7 +209,8 @@ return flutter::OutlinedButton(onPressed: () { x += 1; print('Button pressed!');
   });
 
   group('Layout Widgets', () {
-    testWidgets('renders ListView with multiple items', (WidgetTester tester) async {
+    testWidgets('renders ListView with multiple items',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::ListView(children: [
   flutter::Text(text: 'Item 1'),
@@ -196,8 +218,8 @@ return flutter::ListView(children: [
   flutter::Text(text: 'Item 3'),
 ]);''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -213,7 +235,8 @@ return flutter::ListView(children: [
       expect(find.text('Item 3'), findsOneWidget);
     });
 
-    testWidgets('renders GridView with multiple items', (WidgetTester tester) async {
+    testWidgets('renders GridView with multiple items',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::GridView(
   children: [
@@ -222,8 +245,8 @@ return flutter::GridView(
   flutter::Text(text: 'Item 3'),
 ]);''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -239,7 +262,8 @@ return flutter::GridView(
       expect(find.text('Item 3'), findsOneWidget);
     });
 
-    testWidgets('renders Column with alignment properties', (WidgetTester tester) async {
+    testWidgets('renders Column with alignment properties',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::Column(
   mainAxisAlignment: parameter::MainAxisAlignmentCenter(),
@@ -251,8 +275,8 @@ return flutter::Column(
   ]
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -266,7 +290,8 @@ return flutter::Column(
       expect(find.text('Item 3'), findsOneWidget);
     });
 
-    testWidgets('renders Row with alignment properties', (WidgetTester tester) async {
+    testWidgets('renders Row with alignment properties',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::Row(
   mainAxisAlignment: parameter::MainAxisAlignmentSpaceEvenly(),
@@ -278,8 +303,8 @@ return flutter::Row(
   ]
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -299,8 +324,8 @@ return flutter::Container(
   child: flutter::Text(text: 'Inside Container')
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -312,15 +337,16 @@ return flutter::Container(
       expect(find.text('Inside Container'), findsOneWidget);
     });
 
-    testWidgets('renders Padding with specified EdgeInsets', (WidgetTester tester) async {
+    testWidgets('renders Padding with specified EdgeInsets',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::Padding(
   padding: parameter::EdgeInsetsAll(value: 16.0),
   child: flutter::Text(text: 'Padded Text')
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -338,8 +364,8 @@ return flutter::Center(
   child: flutter::Text(text: 'Centered Text')
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -351,7 +377,8 @@ return flutter::Center(
       expect(find.text('Centered Text'), findsOneWidget);
     });
 
-    testWidgets('renders SizedBox with specific dimensions', (WidgetTester tester) async {
+    testWidgets('renders SizedBox with specific dimensions',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::SizedBox(
   width: 100,
@@ -359,8 +386,8 @@ return flutter::SizedBox(
   child: flutter::Text(text: 'Inside SizedBox')
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -384,8 +411,8 @@ return flutter::Row(
   ]
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -398,7 +425,8 @@ return flutter::Row(
       expect(find.text('Normal Text'), findsOneWidget);
     });
 
-    testWidgets('renders Stack with multiple children', (WidgetTester tester) async {
+    testWidgets('renders Stack with multiple children',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::Stack(
   children: [
@@ -431,8 +459,8 @@ return flutter::Card(
   child: flutter::Text(text: 'Card Content')
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -444,7 +472,8 @@ return flutter::Card(
       expect(find.text('Card Content'), findsOneWidget);
     });
 
-    testWidgets('renders ListViewBuilder with dynamic items', (WidgetTester tester) async {
+    testWidgets('renders ListViewBuilder with dynamic items',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('items', [
         'Item 0',
         'Item 1',
@@ -465,8 +494,8 @@ return flutter::ListViewBuilder(
   itemCount: items.length,
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -484,7 +513,8 @@ return flutter::ListViewBuilder(
       expect(find.text('Item 6'), findsOneWidget);
     });
 
-    testWidgets('renders GridViewBuilder with dynamic items', (WidgetTester tester) async {
+    testWidgets('renders GridViewBuilder with dynamic items',
+        (WidgetTester tester) async {
       const String tartScript = '''
 final items = [
       'Item 0',
@@ -505,8 +535,8 @@ return flutter::GridViewBuilder(
   itemCount: items.length,
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -524,7 +554,8 @@ return flutter::GridViewBuilder(
       expect(find.text('Item 6'), findsOneWidget);
     });
 
-    testWidgets('renders TextField with decoration and onSubmitted callback', (WidgetTester tester) async {
+    testWidgets('renders TextField with decoration and onSubmitted callback',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::TextField(
   decoration: parameter::InputDecoration(
@@ -535,8 +566,8 @@ return flutter::TextField(
   },
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -548,7 +579,8 @@ return flutter::TextField(
       expect(find.text('Enter your name'), findsOneWidget);
     });
 
-    testWidgets('renders ListTile with title, subtitle, and trailing', (WidgetTester tester) async {
+    testWidgets('renders ListTile with title, subtitle, and trailing',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::ListTile(
   title: flutter::Text(text: 'List Tile Title'),
@@ -556,8 +588,8 @@ return flutter::ListTile(
   trailing: flutter::Text(text: 'List Tile Trailing'),
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -573,15 +605,16 @@ return flutter::ListTile(
   });
 
   group('Progress Indicators', () {
-    testWidgets('renders LinearProgressIndicator with custom color', (WidgetTester tester) async {
+    testWidgets('renders LinearProgressIndicator with custom color',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::LinearProgressIndicator(
   value: 0.5,
   color: parameter::Color(r: 255, g: 0, b: 0),
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -593,14 +626,15 @@ return flutter::LinearProgressIndicator(
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('renders CircularProgressIndicator with custom value', (WidgetTester tester) async {
+    testWidgets('renders CircularProgressIndicator with custom value',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::CircularProgressIndicator(
   value: 0.5,
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -614,12 +648,13 @@ return flutter::CircularProgressIndicator(
   });
 
   group('Custom and Advanced Features', () {
-    testWidgets('renders custom widget (CustomButton)', (WidgetTester tester) async {
+    testWidgets('renders custom widget (CustomButton)',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::CustomButton(text: 'Custom Button');''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -631,13 +666,14 @@ return flutter::CustomButton(text: 'Custom Button');''';
       expect(find.text('Custom Button'), findsOneWidget);
     });
 
-    testWidgets('imports and uses variables from other files', (WidgetTester tester) async {
+    testWidgets('imports and uses variables from other files',
+        (WidgetTester tester) async {
       const String tartScript = '''
 import 'imported.tart';
 return flutter::Text(text: text);''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -649,7 +685,8 @@ return flutter::Text(text: text);''';
       expect(find.text('This variable was imported'), findsOneWidget);
     });
 
-    testWidgets('handles large widget trees efficiently', (WidgetTester tester) async {
+    testWidgets('handles large widget trees efficiently',
+        (WidgetTester tester) async {
       final file = getProjectFile('assets/large_test.tart');
       final tartScript = file.readAsStringSync();
 
@@ -660,7 +697,6 @@ return flutter::Text(text: text);''';
             home: Scaffold(
               body: tart.TartStatefulWidget(
                 source: tartScript,
-                printBenchmarks: true,
               ),
             ),
           ),
@@ -671,7 +707,8 @@ return flutter::Text(text: text);''';
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renders multiple TartStatefulWidgets', (WidgetTester tester) async {
+    testWidgets('renders multiple TartStatefulWidgets',
+        (WidgetTester tester) async {
       const String tartScript = '''
 return flutter::Row(children: [
   flutter::Text(text: 'Hello'),
@@ -721,7 +758,8 @@ return flutter::Row(children: [
       expect(find.text('World0'), findsOneWidget);
     });
 
-    testWidgets('renders Flutter widgets passed as environment variables', (WidgetTester tester) async {
+    testWidgets('renders Flutter widgets passed as environment variables',
+        (WidgetTester tester) async {
       final env = interpreter.createIsolatedEnvironment();
       interpreter.setCurrentEnvironment(env);
       const flutterWidget = Text('Hello from flutter');
@@ -730,8 +768,8 @@ return flutter::Row(children: [
       const String tartScript = '''
 return flutterWidget;''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -744,7 +782,8 @@ return flutterWidget;''';
       interpreter.removeEnvironment(env);
     });
 
-    testWidgets('renders and updates StatefulBuilder', (WidgetTester tester) async {
+    testWidgets('renders and updates StatefulBuilder',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('x', 0);
       const String tartScript = '''
 return flutter::StatefulBuilder(
@@ -753,8 +792,8 @@ return flutter::StatefulBuilder(
   },
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
+
       final widget = result as Widget;
 
       await tester.pumpWidget(
@@ -771,7 +810,8 @@ return flutter::StatefulBuilder(
       expect(find.text('Press me1'), findsOneWidget);
     });
 
-    testWidgets('renders multiple StatefulBuilders independently', (WidgetTester tester) async {
+    testWidgets('renders multiple StatefulBuilders independently',
+        (WidgetTester tester) async {
       interpreter.defineGlobalVariable('x', 0);
       interpreter.defineGlobalVariable('y', 0);
       const String tartScript = '''
@@ -789,8 +829,7 @@ flutter::StatefulBuilder(
   ]
 );''';
 
-      final (result, benchmark) = interpreter.runWithBenchmark(tartScript);
-      print(benchmark);
+      final result = interpreter.run(tartScript);
       final widget = result as Widget;
 
       await tester.pumpWidget(

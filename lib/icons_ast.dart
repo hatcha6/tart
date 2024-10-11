@@ -119,3 +119,7 @@ class IconsError extends Icons {
 class IconsHelp extends Icons {
   const IconsHelp() : super('IconsHelp');
 }
+
+class CustomIcons extends Icons {
+  const CustomIcons(super.tartType);
+}

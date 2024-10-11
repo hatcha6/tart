@@ -179,6 +179,41 @@ class Parser {
           params['child'],
         ),
     'StatefulBuilder': (params) => StatefulBuilder(params['builder']),
+    'GestureDetector': (params) => GestureDetector(
+          params['child'],
+          params['onTap'],
+          params['onDoubleTap'],
+          params['onLongPress'],
+        ),
+    'Wrap': (params) => Wrap(
+          params['children'],
+          params['direction'],
+        ),
+    'Align': (params) => Align(
+          params['alignment'],
+          params['child'],
+        ),
+    'Flexible': (params) => Flexible(
+          params['child'],
+          params['flex'],
+        ),
+    'FractionallySizedBox': (params) => FractionallySizedBox(
+          params['widthFactor'],
+          params['heightFactor'],
+          params['child'],
+        ),
+    'InkWell': (params) => InkWell(
+          params['child'],
+          params['onTap'],
+          params['onDoubleTap'],
+          params['onLongPress'],
+        ),
+    'Divider': (params) => Divider(
+          params['height'],
+          params['thickness'],
+          params['color'],
+        ),
+    'SafeArea': (params) => SafeArea(params['child']),
   };
 
   List<AstNode> parse(List<Token> tokens, String source) {
@@ -351,10 +386,7 @@ class Parser {
 
   Icons parseIcons(Token name) {
     consume(TokenType.leftParen, "Expect '(' after Icons method.");
-    final result = iconsMap[name.lexeme];
-    if (result == null) {
-      throw error(name, "Unknown Icons method: ${name.lexeme}");
-    }
+    final result = iconsMap[name.lexeme] ?? CustomIcons(name.lexeme);
     consume(TokenType.rightParen, "Expect ')' after Icons parameters.");
     return result;
   }
@@ -571,6 +603,7 @@ class Parser {
 
   AstNode forStatement() {
     consume(TokenType.leftParen, "Expect '(' after 'for'.");
+    // Regular for loop
     AstNode? initializer;
     if (match([TokenType.semicolon])) {
       initializer = null;
@@ -580,10 +613,13 @@ class Parser {
     } else {
       initializer = expressionStatement();
     }
+
     AstNode? condition = !check(TokenType.semicolon) ? expression() : null;
     consume(TokenType.semicolon, "Expect ';' after loop condition.");
+
     AstNode? increment = !check(TokenType.rightParen) ? expression() : null;
     consume(TokenType.rightParen, "Expect ')' after for clauses.");
+
     AstNode body = statement();
     return ForStatement(initializer, condition, increment, body);
   }

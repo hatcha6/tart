@@ -281,3 +281,78 @@ class StatefulBuilder extends AstWidget {
 
   const StatefulBuilder(this.builder) : super('StatefulBuilder');
 }
+
+class Wrap extends AstWidget {
+  final AstNode children;
+  final AstNode? spacing;
+  final AstNode? runSpacing;
+  final AstNode? alignment;
+
+  const Wrap(this.children, [this.spacing, this.runSpacing, this.alignment])
+      : super('Wrap');
+}
+
+class Flexible extends AstWidget {
+  final AstNode? flex;
+  final AstWidget child;
+
+  const Flexible(this.child, [this.flex]) : super('Flexible');
+}
+
+class GestureDetector extends AstWidget {
+  final AstWidget child;
+  final AstNode? onTap;
+  final AstNode? onDoubleTap;
+  final AstNode? onLongPress;
+
+  const GestureDetector(this.child,
+      [this.onTap, this.onDoubleTap, this.onLongPress])
+      : super('GestureDetector');
+}
+
+class Align extends AstWidget {
+  final AstNode alignment;
+  final AstWidget? child;
+
+  const Align(this.alignment, [this.child]) : super('Align');
+}
+
+class AspectRatio extends AstWidget {
+  final AstNode aspectRatio;
+  final AstWidget child;
+
+  const AspectRatio(this.aspectRatio, this.child) : super('AspectRatio');
+}
+
+class FractionallySizedBox extends AstWidget {
+  final AstNode? widthFactor;
+  final AstNode? heightFactor;
+  final AstWidget? child;
+
+  const FractionallySizedBox([this.widthFactor, this.heightFactor, this.child])
+      : super('FractionallySizedBox');
+}
+
+class InkWell extends AstWidget {
+  final AstWidget child;
+  final AstNode? onTap;
+  final AstNode? onDoubleTap;
+  final AstNode? onLongPress;
+
+  const InkWell(this.child, [this.onTap, this.onDoubleTap, this.onLongPress])
+      : super('InkWell');
+}
+
+class Divider extends AstWidget {
+  final AstNode? height;
+  final AstNode? thickness;
+  final AstNode? color;
+
+  const Divider([this.height, this.thickness, this.color]) : super('Divider');
+}
+
+class SafeArea extends AstWidget {
+  final AstWidget child;
+
+  const SafeArea(this.child) : super('SafeArea');
+}

@@ -112,7 +112,7 @@ class Evaluator {
   final Map<String, dynamic Function(AstParameter node)> _parameterFactories =
       {};
 
-  static const Map<String, flt.IconData> icons = {
+  final Map<String, flt.IconData> icons = {
     'IconsAdd': flt.Icons.add,
     'IconsRemove': flt.Icons.remove,
     'IconsEdit': flt.Icons.edit,
@@ -470,6 +470,96 @@ class Evaluator {
         },
       );
     };
+    _widgetFactories[GestureDetector] = (node) {
+      node as GestureDetector;
+      final onTap = getFunctionDeclaration(node.onTap);
+      final onDoubleTap = getFunctionDeclaration(node.onDoubleTap);
+      final onLongPress = getFunctionDeclaration(node.onLongPress);
+      return flt.GestureDetector(
+        onTap: onTap != null
+            ? () => _callClosure(
+                  onTap,
+                  onTap.declaration.parameters,
+                )
+            : null,
+        onDoubleTap: onDoubleTap != null
+            ? () => _callClosure(
+                  onDoubleTap,
+                  onDoubleTap.declaration.parameters,
+                )
+            : null,
+        onLongPress: onLongPress != null
+            ? () => _callClosure(
+                  onLongPress,
+                  onLongPress.declaration.parameters,
+                )
+            : null,
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[Wrap] = (node) {
+      node as Wrap;
+      return flt.Wrap(
+        children: _evaluateListOfWidgets(node.children),
+      );
+    };
+    _widgetFactories[Align] = (node) {
+      node as Align;
+      return flt.Align(
+        alignment: _convertAlignment(node.alignment as Alignment),
+        child: _evaluateWidget(node.child!),
+      );
+    };
+    _widgetFactories[Flexible] = (node) {
+      node as Flexible;
+      return flt.Flexible(
+        flex: node.flex != null ? evaluateNode(node.flex!) : 1,
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[FractionallySizedBox] = (node) {
+      node as FractionallySizedBox;
+      return flt.FractionallySizedBox(
+        widthFactor:
+            node.widthFactor != null ? evaluateNode(node.widthFactor!) : null,
+        heightFactor:
+            node.heightFactor != null ? evaluateNode(node.heightFactor!) : null,
+        child: _evaluateWidget(node.child!),
+      );
+    };
+    _widgetFactories[InkWell] = (node) {
+      node as InkWell;
+      final onTap = getFunctionDeclaration(node.onTap);
+      final onDoubleTap = getFunctionDeclaration(node.onDoubleTap);
+      final onLongPress = getFunctionDeclaration(node.onLongPress);
+      return flt.InkWell(
+        onTap: onTap != null
+            ? () => _callClosure(onTap, onTap.declaration.parameters)
+            : null,
+        onDoubleTap: onDoubleTap != null
+            ? () =>
+                _callClosure(onDoubleTap, onDoubleTap.declaration.parameters)
+            : null,
+        onLongPress: onLongPress != null
+            ? () =>
+                _callClosure(onLongPress, onLongPress.declaration.parameters)
+            : null,
+        child: _evaluateWidget(node.child),
+      );
+    };
+    _widgetFactories[Divider] = (node) {
+      node as Divider;
+      return flt.Divider(
+        height: node.height != null ? evaluateNode(node.height!) : null,
+        thickness:
+            node.thickness != null ? evaluateNode(node.thickness!) : null,
+        color: node.color != null ? _convertColor(node.color as Color) : null,
+      );
+    };
+    _widgetFactories[SafeArea] = (node) {
+      node as SafeArea;
+      return flt.SafeArea(child: _evaluateWidget(node.child));
+    };
   }
 
   void _initializeParameterFactories() {
@@ -505,6 +595,10 @@ class Evaluator {
       node as Icons;
       return _convertIcon(node);
     };
+  }
+
+  void registerCustomIcons(Map<String, flt.IconData> customIcons) {
+    icons.addAll(customIcons);
   }
 
   void setImportHandler(List<AstNode> Function(String filepath) importHandler) {
@@ -655,7 +749,6 @@ class Evaluator {
           break;
         }
       }
-      return null;
     });
   }
 

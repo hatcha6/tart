@@ -64,7 +64,8 @@ class Tart {
 
   Tart(
       {String Function(String filePath)? importHandler,
-      Map<String, Widget Function(Map<String, dynamic> params)>? customWidgets})
+      Map<String, Widget Function(Map<String, dynamic> params)>? customWidgets,
+      Map<String, IconData>? customIcons})
       : _importHandler = importHandler,
         evaluator = Evaluator(),
         parser = Parser(),
@@ -74,6 +75,9 @@ class Tart {
       customWidgets.forEach((name, factory) {
         evaluator.registerCustomWidget(name, factory);
       });
+    }
+    if (customIcons != null) {
+      evaluator.registerCustomIcons(customIcons);
     }
   }
 
